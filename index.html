@@ -108,9 +108,15 @@
     }
     .stat .k{font-size:12px;color:var(--muted)}
     .stat .v{font-size:18px;font-weight:750;margin-top:2px}
-
-    .inputRow{display:grid;grid-template-columns:1fr 112px;gap:10px;margin-top:14px;align-items:stretch;}
-    @media (max-width: 380px){.inputRow{grid-template-columns:1fr 96px;}}
+    /* Put Guess button BELOW the input */
+    .inputRow{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      margin-top:14px;
+      align-items:stretch;
+    }
+    
     .guessInput{
       flex:1;
       font-size:18px;
