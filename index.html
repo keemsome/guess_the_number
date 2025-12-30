@@ -1,0 +1,1187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Guess The Number</title>
+
+  <!--
+    Notes:
+    - Single-file version for easy GitHub Pages hosting.
+    - Includes optional Telegram games.js so "Share score" can work inside Telegram.
+    - No webhook / setGameScore yet (you’ll add later once the bot is ready).
+  -->
+
+  <style>
+    :root {
+      --bg: #0b1020;
+      --panel: rgba(255, 255, 255, 0.08);
+      --panel-2: rgba(255, 255, 255, 0.06);
+      --border: rgba(255, 255, 255, 0.14);
+      --text: rgba(255, 255, 255, 0.92);
+      --muted: rgba(255, 255, 255, 0.68);
+      --good: rgba(66, 255, 170, 0.85);
+      --bad: rgba(255, 90, 90, 0.9);
+      --warn: rgba(255, 207, 72, 0.92);
+      --shadow: 0 10px 30px rgba(0,0,0,0.35);
+      --r: 18px;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      height: 100%;
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      color: var(--text);
+      background: radial-gradient(1200px 800px at 20% 10%, #1a2a6c 0%, transparent 60%),
+                  radial-gradient(900px 700px at 90% 20%, #b21f1f 0%, transparent 55%),
+                  radial-gradient(900px 900px at 40% 90%, #0f9b0f 0%, transparent 60%),
+                  var(--bg);
+      overflow-x: hidden;
+    }
+
+    a { color: inherit; }
+
+    .wrap {
+      min-height: 100dvh;
+      padding: max(14px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) max(14px, env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left));
+      display: flex;
+      justify-content: center;
+    }
+
+    .app {
+      width: min(1100px, 100%);
+      display: grid;
+      grid-template-rows: auto 1fr;
+      gap: 14px;
+    }
+
+    /* Top bar */
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px;
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      background: linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0.06));
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+
+    .brand {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-size: clamp(18px, 4vw, 24px);
+      letter-spacing: 0.2px;
+      line-height: 1.1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .brand .subtitle {
+      margin: 0;
+      font-size: clamp(12px, 2.8vw, 14px);
+      color: var(--muted);
+      line-height: 1.2;
+    }
+
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .field {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: rgba(0,0,0,0.18);
+    }
+
+    .field label {
+      font-size: 12px;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    select {
+      appearance: none;
+      border: none;
+      outline: none;
+      background: transparent;
+      color: var(--text);
+      font-size: 13px;
+      padding-right: 18px;
+      cursor: pointer;
+      max-width: 260px;
+    }
+
+    .select-wrap {
+      position: relative;
+    }
+
+    .select-wrap:after {
+      content: "▾";
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--muted);
+      pointer-events: none;
+      font-size: 12px;
+    }
+
+    /* Main layout */
+    .main {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 14px;
+      align-items: start;
+    }
+
+    @media (max-width: 900px) {
+      .main { grid-template-columns: 1fr; }
+    }
+
+    /* Panels */
+    .panel {
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      background: linear-gradient(180deg, rgba(255,255,255,0.09), rgba(255,255,255,0.05));
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+      overflow: hidden;
+    }
+
+    .panel .hd {
+      padding: 14px;
+      border-bottom: 1px solid rgba(255,255,255,0.10);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .panel .hd h2 {
+      margin: 0;
+      font-size: 16px;
+      letter-spacing: 0.2px;
+    }
+
+    .panel .bd {
+      padding: 14px;
+    }
+
+    /* Buttons */
+    .btn {
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(255,255,255,0.10);
+      color: var(--text);
+      border-radius: 14px;
+      padding: 10px 12px;
+      font-size: 14px;
+      line-height: 1;
+      cursor: pointer;
+      transition: transform 0.05s ease, background 0.15s ease, border-color 0.15s ease;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      min-height: 44px; /* tap target */
+    }
+
+    .btn:active { transform: translateY(1px); }
+    .btn:hover { background: rgba(255,255,255,0.14); }
+
+    .btn.primary {
+      background: rgba(86, 255, 160, 0.16);
+      border-color: rgba(86, 255, 160, 0.35);
+    }
+
+    .btn.primary:hover {
+      background: rgba(86, 255, 160, 0.22);
+    }
+
+    .btn.danger {
+      background: rgba(255, 90, 90, 0.14);
+      border-color: rgba(255, 90, 90, 0.35);
+    }
+
+    .btn.small { min-height: 38px; padding: 8px 10px; font-size: 13px; border-radius: 12px; }
+    .btn:disabled { opacity: 0.55; cursor: not-allowed; }
+
+    /* Game info row */
+    .meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .pill {
+      display: inline-flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(0,0,0,0.18);
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .pill strong { color: var(--text); }
+
+    /* Input */
+    .input-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: center;
+      margin-top: 12px;
+    }
+
+    @media (max-width: 420px) {
+      .input-row { grid-template-columns: 1fr; }
+    }
+
+    input[type="text"] {
+      width: 100%;
+      border: 1px solid rgba(255,255,255,0.18);
+      background: rgba(0,0,0,0.22);
+      color: var(--text);
+      border-radius: 14px;
+      padding: 12px 12px;
+      font-size: 18px;
+      letter-spacing: 4px;
+      text-align: center;
+      outline: none;
+      min-height: 44px;
+    }
+
+    input[type="text"]::placeholder { color: rgba(255,255,255,0.35); letter-spacing: 4px; }
+
+    .hint {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .feedback {
+      margin-top: 12px;
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(0,0,0,0.18);
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+    }
+
+    .feedback.good { border-color: rgba(86, 255, 160, 0.30); background: rgba(86, 255, 160, 0.10); }
+    .feedback.bad  { border-color: rgba(255, 90, 90, 0.30); background: rgba(255, 90, 90, 0.10); }
+    .feedback.warn { border-color: rgba(255, 207, 72, 0.30); background: rgba(255, 207, 72, 0.08); }
+
+    /* History */
+    .history {
+      margin-top: 14px;
+      border-top: 1px solid rgba(255,255,255,0.10);
+      padding-top: 14px;
+    }
+
+    .history h3 {
+      margin: 0 0 10px;
+      font-size: 14px;
+      color: var(--muted);
+      letter-spacing: 0.2px;
+    }
+
+    .list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 42dvh;
+      overflow: auto;
+      padding-right: 6px;
+      scroll-behavior: smooth;
+    }
+
+    .row {
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.06);
+      border-radius: 14px;
+      padding: 10px 12px;
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 10px;
+      align-items: start;
+      animation: fadeUp 0.18s ease both;
+    }
+
+    .badge {
+      font-weight: 700;
+      letter-spacing: 2px;
+      font-size: 14px;
+      padding: 6px 10px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(0,0,0,0.18);
+      min-width: 74px;
+      text-align: center;
+    }
+
+    .row p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.35; }
+
+    /* Leaderboard */
+    .lb {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .lb .empty {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.4;
+      padding: 10px 12px;
+      border: 1px dashed rgba(255,255,255,0.20);
+      border-radius: 14px;
+      background: rgba(0,0,0,0.14);
+    }
+
+    .lb-item {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 10px;
+      align-items: center;
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.06);
+    }
+
+    .rank {
+      width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(0,0,0,0.18);
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .lb-item .name {
+      font-weight: 650;
+      font-size: 14px;
+      margin: 0;
+    }
+
+    .lb-item .meta2 {
+      margin: 2px 0 0;
+      color: var(--muted);
+      font-size: 12.5px;
+    }
+
+    .lb-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+
+    /* Modal */
+    .modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.58);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      z-index: 999;
+    }
+
+    .modal.open { display: flex; }
+
+    .card {
+      width: min(520px, 100%);
+      border-radius: 22px;
+      border: 1px solid rgba(255,255,255,0.16);
+      background: linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,255,255,0.07));
+      box-shadow: 0 22px 60px rgba(0,0,0,0.5);
+      backdrop-filter: blur(12px);
+      overflow: hidden;
+    }
+
+    .card .card-hd {
+      padding: 16px 16px 10px;
+      border-bottom: 1px solid rgba(255,255,255,0.10);
+    }
+
+    .card .card-hd h3 { margin: 0; font-size: 18px; }
+
+    .card .card-bd {
+      padding: 14px 16px 16px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    .card .card-bd strong { color: var(--text); }
+
+    .stack { display: grid; gap: 10px; margin-top: 10px; }
+
+    .name-row {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
+
+    .name-row label { font-size: 12px; color: var(--muted); }
+
+    .name-row input {
+      letter-spacing: normal;
+      text-align: left;
+      font-size: 16px;
+    }
+
+    .card-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+
+    /* Animations */
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20% { transform: translateX(-8px); }
+      40% { transform: translateX(8px); }
+      60% { transform: translateX(-6px); }
+      80% { transform: translateX(6px); }
+    }
+
+    @keyframes flashGood {
+      0% { box-shadow: 0 0 0 rgba(0,0,0,0); }
+      50% { box-shadow: 0 0 0 6px rgba(86,255,160,0.22); }
+      100% { box-shadow: 0 0 0 rgba(0,0,0,0); }
+    }
+
+    @keyframes flashBad {
+      0% { box-shadow: 0 0 0 rgba(0,0,0,0); }
+      50% { box-shadow: 0 0 0 6px rgba(255,90,90,0.22); }
+      100% { box-shadow: 0 0 0 rgba(0,0,0,0); }
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .shake { animation: shake 0.32s ease; }
+    .flash-good { animation: flashGood 0.28s ease; }
+    .flash-bad { animation: flashBad 0.28s ease; }
+
+    /* Small footer note */
+    .note {
+      margin-top: 10px;
+      font-size: 12.5px;
+      color: var(--muted);
+    }
+
+    .note code {
+      background: rgba(0,0,0,0.25);
+      border: 1px solid rgba(255,255,255,0.12);
+      padding: 2px 6px;
+      border-radius: 10px;
+      color: var(--text);
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="app">
+      <header class="topbar">
+        <div class="brand">
+          <h1>🎯 Guess The Number</h1>
+          <p id="subtitle" class="subtitle">Pick a mode and guess the secret number (no repeated digits).</p>
+        </div>
+
+        <div class="top-actions">
+          <div class="field select-wrap" title="Choose difficulty">
+            <label for="modeSelect">Mode</label>
+            <select id="modeSelect" aria-label="Game mode">
+              <option value="casual">Casual — 3 digits / max 30 guesses</option>
+              <option value="hard">Hard — 4 digits / max 20 guesses</option>
+            </select>
+          </div>
+          <button id="newGameBtn" class="btn small">New Game</button>
+        </div>
+      </header>
+
+      <div class="main">
+        <!-- Game Panel -->
+        <section class="panel" aria-label="Game">
+          <div class="hd">
+            <h2>Play</h2>
+            <div class="meta">
+              <span class="pill">
+                Guesses: <strong id="guessCount">0</strong> / <strong id="maxGuesses">30</strong>
+                &nbsp;•&nbsp; Time: <strong id="timer">0:00</strong>
+              </span>
+            </div>
+          </div>
+
+          <div class="bd">
+            <div class="input-row" id="inputRow">
+              <input
+                id="guessInput"
+                type="text"
+                maxlength="3"
+                placeholder="000"
+                autocomplete="off"
+                autocorrect="off"
+                spellcheck="false"
+                inputmode="numeric"
+                pattern="[0-9]*"
+                enterkeyhint="done"
+                aria-label="Enter your guess"
+              />
+              <button id="guessBtn" class="btn primary" disabled>Guess</button>
+            </div>
+
+            <div class="hint" id="hint">
+              Enter <strong>3</strong> different digits (0–9). No repeats.
+            </div>
+
+            <div id="feedback" class="feedback" aria-live="polite">
+              👋 Ready when you are.
+            </div>
+
+            <div class="history">
+              <h3>Guess history</h3>
+              <div id="historyList" class="list" role="list"></div>
+              <p class="note">Tip: tap the input, type digits, then press <code>Enter</code> (or the Guess button).</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Leaderboard Panel -->
+        <aside class="panel" aria-label="Leaderboard">
+          <div class="hd">
+            <h2>🏆 Leaderboard</h2>
+            <span class="pill"><span id="lbModeLabel">Casual</span></span>
+          </div>
+          <div class="bd">
+            <div class="lb" id="leaderboard"></div>
+            <div class="lb-actions">
+              <button id="clearLbBtn" class="btn danger small">Clear</button>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </div>
+
+  <!-- Win Modal -->
+  <div id="winModal" class="modal" role="dialog" aria-modal="true" aria-label="You won">
+    <div class="card">
+      <div class="card-hd">
+        <h3>🎉 You Win!</h3>
+      </div>
+      <div class="card-bd">
+        <div class="stack">
+          <div>
+            You solved it in <strong id="finalGuesses">0</strong> guesses.
+            <br />
+            Time: <strong id="finalTime">0:00</strong>
+            <br />
+            Score: <strong id="finalScore">0</strong>
+          </div>
+
+          <div class="name-row">
+            <label for="playerName">Save to leaderboard (name):</label>
+            <input id="playerName" type="text" maxlength="20" placeholder="Your name" autocomplete="name" />
+          </div>
+
+          <div class="card-actions">
+            <button id="saveBtn" class="btn primary">Save score</button>
+            <button id="shareBtn" class="btn" disabled title="Works inside Telegram Game messages">Share score</button>
+            <button id="playAgainBtn" class="btn">Play again</button>
+          </div>
+
+          <div class="note" id="shareNote">
+            Share works when launched as a Telegram <strong>Game</strong> message (via @BotFather /newgame).
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Game Over Modal -->
+  <div id="overModal" class="modal" role="dialog" aria-modal="true" aria-label="Game over">
+    <div class="card">
+      <div class="card-hd">
+        <h3>😔 Game Over</h3>
+      </div>
+      <div class="card-bd">
+        <div class="stack">
+          <div>
+            You reached the max guesses.
+            <br />
+            The secret number was: <strong id="reveal">000</strong>
+          </div>
+          <div class="card-actions">
+            <button id="overNewBtn" class="btn primary">New game</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Optional: Telegram game helper (Share Score). Safe to include for normal browsers too. -->
+  <script src="https://telegram.org/js/games.js"></script>
+
+  <script>
+    // ------------------------------
+    // Configuration
+    // ------------------------------
+    const MODES = {
+      casual: {
+        id: "casual",
+        label: "Casual",
+        digits: 3,
+        maxGuesses: 30,
+        lbKey: "number_guess_lb_casual_v1"
+      },
+      hard: {
+        id: "hard",
+        label: "Hard",
+        digits: 4,
+        maxGuesses: 20,
+        lbKey: "number_guess_lb_hard_v1"
+      }
+    };
+
+    const TOP_N = 10;
+
+    // ------------------------------
+    // State
+    // ------------------------------
+    let mode = MODES.casual;
+    let secret = [];
+    let guessCount = 0;
+    let startTimeMs = 0;
+    let timerHandle = null;
+    let gameOver = false;
+
+    // ------------------------------
+    // Elements
+    // ------------------------------
+    const modeSelect = document.getElementById("modeSelect");
+    const subtitle = document.getElementById("subtitle");
+    const newGameBtn = document.getElementById("newGameBtn");
+
+    const guessInput = document.getElementById("guessInput");
+    const guessBtn = document.getElementById("guessBtn");
+    const inputRow = document.getElementById("inputRow");
+
+    const hint = document.getElementById("hint");
+    const feedback = document.getElementById("feedback");
+    const historyList = document.getElementById("historyList");
+
+    const guessCountEl = document.getElementById("guessCount");
+    const maxGuessesEl = document.getElementById("maxGuesses");
+    const timerEl = document.getElementById("timer");
+
+    const leaderboardEl = document.getElementById("leaderboard");
+    const lbModeLabel = document.getElementById("lbModeLabel");
+    const clearLbBtn = document.getElementById("clearLbBtn");
+
+    const winModal = document.getElementById("winModal");
+    const finalGuesses = document.getElementById("finalGuesses");
+    const finalTime = document.getElementById("finalTime");
+    const finalScore = document.getElementById("finalScore");
+    const playerName = document.getElementById("playerName");
+    const saveBtn = document.getElementById("saveBtn");
+    const playAgainBtn = document.getElementById("playAgainBtn");
+    const shareBtn = document.getElementById("shareBtn");
+
+    const overModal = document.getElementById("overModal");
+    const revealEl = document.getElementById("reveal");
+    const overNewBtn = document.getElementById("overNewBtn");
+
+    // ------------------------------
+    // Helpers
+    // ------------------------------
+    function isTelegramGameContext() {
+      // games.js sets TelegramGameProxy in Telegram game webview.
+      return typeof window.TelegramGameProxy !== "undefined" && typeof window.TelegramGameProxy.shareScore === "function";
+    }
+
+    function setFeedback(text, tone = "") {
+      feedback.classList.remove("good", "bad", "warn");
+      if (tone) feedback.classList.add(tone);
+      feedback.textContent = text;
+    }
+
+    function pad2(n) { return String(n).padStart(2, "0"); }
+
+    function formatTime(ms) {
+      const total = Math.max(0, Math.floor(ms / 1000));
+      const m = Math.floor(total / 60);
+      const s = total % 60;
+      return `${m}:${pad2(s)}`;
+    }
+
+    function startTimer() {
+      stopTimer();
+      startTimeMs = Date.now();
+      timerEl.textContent = "0:00";
+      timerHandle = setInterval(() => {
+        timerEl.textContent = formatTime(Date.now() - startTimeMs);
+      }, 250);
+    }
+
+    function stopTimer() {
+      if (timerHandle) clearInterval(timerHandle);
+      timerHandle = null;
+    }
+
+    function flash(el, cls) {
+      el.classList.remove("flash-good", "flash-bad", "shake");
+      // Trigger reflow so animation restarts reliably
+      void el.offsetWidth;
+      el.classList.add(cls);
+      setTimeout(() => el.classList.remove(cls), 350);
+    }
+
+    function scrollInputIntoView() {
+      // Helps on mobile/Telegram in-app browser where keyboard can cover inputs.
+      setTimeout(() => {
+        guessInput.scrollIntoView({ block: "center", behavior: "smooth" });
+      }, 150);
+    }
+
+    function generateSecret(digits) {
+      const pool = [0,1,2,3,4,5,6,7,8,9];
+      // Fisher-Yates shuffle
+      for (let i = pool.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [pool[i], pool[j]] = [pool[j], pool[i]];
+      }
+      return pool.slice(0, digits);
+    }
+
+    function parseGuess(raw, digits) {
+      const cleaned = String(raw).trim();
+      if (cleaned.length !== digits) return { ok: false, reason: `Enter exactly ${digits} digits.` };
+      if (!/^\d+$/.test(cleaned)) return { ok: false, reason: "Digits only (0–9)." };
+      const arr = cleaned.split("").map(d => Number(d));
+      const set = new Set(arr);
+      if (set.size !== arr.length) return { ok: false, reason: "No repeated digits." };
+      return { ok: true, arr, text: cleaned };
+    }
+
+    function scoreFromGuesses(guessesUsed) {
+      // Simple, guess-based score. Higher is better.
+      // Example: casual max 30 -> first-try = 300, 10 guesses = 210, etc.
+      const base = (mode.maxGuesses + 1 - guessesUsed) * 10;
+      return Math.max(0, base);
+    }
+
+    function computeClue(guessArr) {
+      let correctPos = 0;
+      for (let i = 0; i < mode.digits; i++) {
+        if (guessArr[i] === secret[i]) correctPos++;
+      }
+      // total correct digits = intersection size
+      let totalCorrect = 0;
+      const secretSet = new Set(secret);
+      for (const d of guessArr) if (secretSet.has(d)) totalCorrect++;
+      const wrongPos = totalCorrect - correctPos;
+      return { correctPos, wrongPos, totalCorrect };
+    }
+
+    function clueText({ correctPos, wrongPos, totalCorrect }) {
+      const n = mode.digits;
+      if (correctPos === n) return `✅ Perfect! ${n} correct digits in ${n} correct positions.`;
+      if (totalCorrect === 0) return `❌ No correct digits.`;
+
+      // Friendly sentence that still matches your original 3-digit clue list (just generalized).
+      const digitWord = totalCorrect === 1 ? "digit" : "digits";
+      const posWord = correctPos === 1 ? "position" : "positions";
+      const wposWord = wrongPos === 1 ? "position" : "positions";
+
+      if (wrongPos === 0) {
+        return `✅ ${totalCorrect} correct ${digitWord}, ${correctPos} correct ${posWord}.`;
+      }
+      if (correctPos === 0) {
+        return `🟡 ${totalCorrect} correct ${digitWord}, ${wrongPos} wrong ${wposWord}.`;
+      }
+      return `🟢 ${totalCorrect} correct ${digitWord}: ${correctPos} correct ${posWord}, ${wrongPos} wrong ${wposWord}.`;
+    }
+
+    function addHistoryRow(guessText, clueLine) {
+      const row = document.createElement("div");
+      row.className = "row";
+      row.setAttribute("role", "listitem");
+
+      const badge = document.createElement("div");
+      badge.className = "badge";
+      badge.textContent = guessText;
+
+      const msg = document.createElement("div");
+      const p = document.createElement("p");
+      p.textContent = clueLine;
+      msg.appendChild(p);
+
+      row.appendChild(badge);
+      row.appendChild(msg);
+      historyList.prepend(row);
+    }
+
+    function setMode(nextMode) {
+      mode = MODES[nextMode] || MODES.casual;
+
+      // UI
+      subtitle.textContent = `${mode.label} mode: guess the ${mode.digits}-digit number (0–9, no repeats).`;
+      lbModeLabel.textContent = mode.label;
+      maxGuessesEl.textContent = String(mode.maxGuesses);
+
+      // Input
+      guessInput.value = "";
+      guessInput.maxLength = mode.digits;
+      guessInput.placeholder = "0".repeat(mode.digits);
+      hint.innerHTML = `Enter <strong>${mode.digits}</strong> different digits (0–9). No repeats.`;
+
+      renderLeaderboard();
+      startNewGame();
+    }
+
+    function startNewGame() {
+      // Reset state
+      secret = generateSecret(mode.digits);
+      guessCount = 0;
+      gameOver = false;
+
+      // Reset UI
+      guessCountEl.textContent = "0";
+      historyList.innerHTML = "";
+      setFeedback("👋 New game started. Good luck!", "");
+
+      // Start timer
+      startTimer();
+
+      // Enable input
+      guessInput.value = "";
+      guessInput.focus({ preventScroll: true });
+      scrollInputIntoView();
+      updateGuessButtonState();
+
+      // Close modals if open
+      closeModal(winModal);
+      closeModal(overModal);
+
+      // Share button only if Telegram game context
+      shareBtn.disabled = !isTelegramGameContext();
+    }
+
+    function updateGuessButtonState() {
+      const parsed = parseGuess(guessInput.value, mode.digits);
+      guessBtn.disabled = !parsed.ok || gameOver;
+    }
+
+    function openModal(el) {
+      el.classList.add("open");
+      document.body.style.overflow = "hidden";
+    }
+
+    function closeModal(el) {
+      el.classList.remove("open");
+      document.body.style.overflow = "";
+    }
+
+    function handleWin() {
+      stopTimer();
+      gameOver = true;
+
+      const elapsed = Date.now() - startTimeMs;
+      const score = scoreFromGuesses(guessCount);
+
+      finalGuesses.textContent = String(guessCount);
+      finalTime.textContent = formatTime(elapsed);
+      finalScore.textContent = String(score);
+
+      // Prepare name input
+      playerName.value = "";
+
+      // Enable share if possible
+      shareBtn.disabled = !isTelegramGameContext();
+
+      openModal(winModal);
+      setTimeout(() => playerName.focus({ preventScroll: true }), 50);
+    }
+
+    function handleGameOver() {
+      stopTimer();
+      gameOver = true;
+      revealEl.textContent = secret.join("");
+      openModal(overModal);
+    }
+
+    // ------------------------------
+    // Leaderboard (localStorage)
+    // ------------------------------
+    function loadLeaderboard() {
+      try {
+        const raw = localStorage.getItem(mode.lbKey);
+        if (!raw) return [];
+        const list = JSON.parse(raw);
+        return Array.isArray(list) ? list : [];
+      } catch {
+        return [];
+      }
+    }
+
+    function saveLeaderboard(list) {
+      localStorage.setItem(mode.lbKey, JSON.stringify(list));
+    }
+
+    function renderLeaderboard() {
+      const list = loadLeaderboard();
+      leaderboardEl.innerHTML = "";
+
+      if (!list.length) {
+        const p = document.createElement("p");
+        p.className = "empty";
+        p.textContent = "No scores yet. Be the first to win!";
+        leaderboardEl.appendChild(p);
+        return;
+      }
+
+      list.slice(0, TOP_N).forEach((item, idx) => {
+        const el = document.createElement("div");
+        el.className = "lb-item";
+
+        const rank = document.createElement("div");
+        rank.className = "rank";
+        rank.textContent = String(idx + 1);
+
+        const info = document.createElement("div");
+        const name = document.createElement("p");
+        name.className = "name";
+        name.textContent = item.name || "(anonymous)";
+
+        const meta = document.createElement("p");
+        meta.className = "meta2";
+        const when = item.date ? new Date(item.date).toLocaleDateString() : "";
+        meta.textContent = `${item.guesses} guesses • score ${item.score}${when ? " • " + when : ""}`;
+
+        info.appendChild(name);
+        info.appendChild(meta);
+
+        el.appendChild(rank);
+        el.appendChild(info);
+
+        leaderboardEl.appendChild(el);
+      });
+    }
+
+    function addToLeaderboard(name, guesses, score) {
+      const list = loadLeaderboard();
+      const entry = {
+        name: (name || "").trim().slice(0, 20) || "(anonymous)",
+        guesses,
+        score,
+        date: new Date().toISOString()
+      };
+      list.push(entry);
+
+      // Sort: fewest guesses first, then higher score (tie breaker), then earlier date
+      list.sort((a, b) => {
+        if (a.guesses !== b.guesses) return a.guesses - b.guesses;
+        if (b.score !== a.score) return b.score - a.score;
+        return String(a.date).localeCompare(String(b.date));
+      });
+
+      saveLeaderboard(list.slice(0, TOP_N));
+      renderLeaderboard();
+    }
+
+    // ------------------------------
+    // Game actions
+    // ------------------------------
+    function submitGuess() {
+      if (gameOver) return;
+
+      const parsed = parseGuess(guessInput.value, mode.digits);
+      if (!parsed.ok) {
+        setFeedback(`⚠️ ${parsed.reason}`, "warn");
+        flash(inputRow, "shake");
+        return;
+      }
+
+      guessCount++;
+      guessCountEl.textContent = String(guessCount);
+
+      const clue = computeClue(parsed.arr);
+      const clueLine = clueText(clue);
+
+      addHistoryRow(parsed.text, clueLine);
+
+      // Clear input for the next guess
+      guessInput.value = "";
+      updateGuessButtonState();
+      guessInput.focus({ preventScroll: true });
+      scrollInputIntoView();
+
+      if (clue.correctPos === mode.digits) {
+        setFeedback("✅ Correct!", "good");
+        flash(inputRow, "flash-good");
+        handleWin();
+        return;
+      }
+
+      // Not solved
+      if (guessCount >= mode.maxGuesses) {
+        setFeedback("❌ No more guesses left.", "bad");
+        flash(inputRow, "flash-bad");
+        handleGameOver();
+        return;
+      }
+
+      // Normal clue feedback
+      setFeedback(clueLine, clue.totalCorrect ? "" : "bad");
+      flash(inputRow, clue.totalCorrect ? "flash-good" : "flash-bad");
+    }
+
+    // ------------------------------
+    // Events
+    // ------------------------------
+    modeSelect.addEventListener("change", () => {
+      setMode(modeSelect.value);
+    });
+
+    newGameBtn.addEventListener("click", () => {
+      startNewGame();
+    });
+
+    guessInput.addEventListener("input", () => {
+      // Strip non-digits immediately
+      const before = guessInput.value;
+      const digitsOnly = before.replace(/\D+/g, "");
+      if (digitsOnly !== before) guessInput.value = digitsOnly;
+
+      // Keep within maxlength
+      guessInput.value = guessInput.value.slice(0, mode.digits);
+
+      updateGuessButtonState();
+    });
+
+    guessInput.addEventListener("focus", () => {
+      scrollInputIntoView();
+    });
+
+    guessInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        submitGuess();
+      }
+    });
+
+    guessBtn.addEventListener("click", submitGuess);
+
+    saveBtn.addEventListener("click", () => {
+      const elapsed = Date.now() - startTimeMs;
+      const score = scoreFromGuesses(guessCount);
+      addToLeaderboard(playerName.value, guessCount, score);
+      closeModal(winModal);
+      setFeedback("🏆 Score saved. Play again?", "good");
+      startNewGame();
+    });
+
+    playAgainBtn.addEventListener("click", () => {
+      closeModal(winModal);
+      startNewGame();
+    });
+
+    shareBtn.addEventListener("click", () => {
+      // Only works inside Telegram Game webview
+      if (isTelegramGameContext()) {
+        try {
+          window.TelegramGameProxy.shareScore();
+        } catch {
+          // ignore
+        }
+      }
+    });
+
+    overNewBtn.addEventListener("click", () => {
+      closeModal(overModal);
+      startNewGame();
+    });
+
+    // Close modal when tapping outside card
+    [winModal, overModal].forEach((m) => {
+      m.addEventListener("click", (e) => {
+        if (e.target === m) {
+          closeModal(m);
+          // If game ended, start fresh (prevents "stuck" state)
+          if (gameOver) startNewGame();
+        }
+      });
+    });
+
+    clearLbBtn.addEventListener("click", () => {
+      localStorage.removeItem(mode.lbKey);
+      renderLeaderboard();
+      setFeedback("🧹 Leaderboard cleared.", "");
+    });
+
+    // ------------------------------
+    // Init
+    // ------------------------------
+    function init() {
+      // Enable share if in Telegram game context
+      shareBtn.disabled = !isTelegramGameContext();
+
+      // Start on selected mode
+      setMode(modeSelect.value);
+
+      // Defensive: update button state
+      updateGuessButtonState();
+
+      // Accessibility: keep focus inside app on load
+      setTimeout(() => guessInput.focus({ preventScroll: true }), 50);
+    }
+
+    init();
+
+    // For debugging (optional):
+    // console.log("Secret:", secret.join(""));
+  </script>
+</body>
+</html>
