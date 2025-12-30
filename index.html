@@ -109,9 +109,8 @@
     .stat .k{font-size:12px;color:var(--muted)}
     .stat .v{font-size:18px;font-weight:750;margin-top:2px}
 
-    .inputRow{display:grid;grid-template-columns:1fr 112px;gap:10px;margin-top:14px;align-items:stretch;}
-    @media (max-width: 380px){.inputRow{grid-template-columns:1fr 96px;}}
-    .guessInput{
+    .inputRow{display:flex;flex-direction:column;gap:10px;margin-top:14px;}
+        .guessInput{
       flex:1;
       font-size:18px;
       padding:12px 14px;
@@ -392,8 +391,7 @@ const MODES = {
         "&s=" + encodeURIComponent(sess.sessionId) +
         "&t=" + encodeURIComponent(sess.token) +
         "&score=" + encodeURIComponent(String(score)) +
-        "&mode=" + encodeURIComponent(mode.id) +
-        ('' ? ("&key=" + encodeURIComponent('')) : "");
+        "&mode=" + encodeURIComponent(mode.id);
 
       // Return the fetch so caller can await if needed
       return fetch(submitUrl).catch(() => null);
@@ -408,18 +406,13 @@ const MODES = {
         TELEGRAM_RANK_ENDPOINT +
         "&s=" + encodeURIComponent(sess.sessionId) +
         "&t=" + encodeURIComponent(sess.token) +
-        "&mode=" + encodeURIComponent(mode.id) +
-        ('' ? ("&key=" + encodeURIComponent('')) : "");
+        "&mode=" + encodeURIComponent(mode.id);
 
       try {
         const r = await fetch(url);
-        // rank_get returns JSON: { ok:true, rank:<number|null>, ... }
-        const data = await r.json();
+        const data = await r.json(); // rank_get returns JSON
         return data;
       } catch {
-        return null;
-      }
-    } catch {
         return null;
       }
     }
