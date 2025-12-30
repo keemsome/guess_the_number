@@ -49,7 +49,7 @@
 
     .grid{
       display:grid;
-      grid-template-columns: 1.25fr .75fr;
+      grid-template-columns: 1fr;
       gap:14px;
     }
     @media (max-width: 860px){
@@ -109,7 +109,8 @@
     .stat .k{font-size:12px;color:var(--muted)}
     .stat .v{font-size:18px;font-weight:750;margin-top:2px}
 
-    .inputRow{display:flex;gap:10px;margin-top:14px;align-items:stretch;}
+    .inputRow{display:grid;grid-template-columns:1fr 112px;gap:10px;margin-top:14px;align-items:stretch;}
+    @media (max-width: 380px){.inputRow{grid-template-columns:1fr 96px;}}
     .guessInput{
       flex:1;
       font-size:18px;
@@ -225,7 +226,9 @@
     /* Tiny footer buttons */
     .footBtns{display:flex;gap:10px;flex-wrap:wrap}
 
-  </style>
+  
+    #submitBtn{width:100%;}
+</style>
 </head>
 <body>
   <div class="wrap">
@@ -263,25 +266,11 @@
           </div>
           <div class="hint" id="hint">Enter <span id="digitsHint">3</span> different digits (0–9). No repeats.</div>
 
-          <div class="list" id="guesses"></div>
+          
+          <div class="hint" id="globalHint">🏆 Global leaderboard: open the bot and type <b>/globaltop</b> (Casual) or <b>/globaltop hard</b> (Hard).</div>
+<div class="list" id="guesses"></div>
         </div>
       </section>
-
-      <!-- Leaderboard -->
-      <aside class="card">
-        <div class="hd">
-          <div>
-            <div style="font-weight:900">🏆 Leaderboard</div>
-            <div class="sub" id="lbSub">Top scores (this device)</div>
-          </div>
-          <span class="badge" id="lbMode">Casual</span>
-        </div>
-        <div class="body">
-          <div class="lbList" id="leaderboard">
-            <p class="lbEmpty">No scores yet. Win a round and save your name.</p>
-          </div>
-        </div>
-      </aside>
     </div>
   </div>
 
@@ -294,13 +283,9 @@
         Time: <b><span id="finalTime">0:00</span></b>
       </p>
       <p>Score: <b><span id="finalScore">0</span></b></p>
-
-      <div class="nameRow">
-        <input id="playerName" maxlength="20" placeholder="Your name" />
-        <button id="saveBtn" class="btn btnPrimary">Save</button>
-      </div>
-
-      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;justify-content:flex-end">
+      
+      <p>Global Rank: <b><span id="globalRank">—</span></b></p>
+<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;justify-content:flex-end">
         <button id="shareBtn" class="btn btnGhost">Share score</button>
         <button id="closeWin" class="btn btnPrimary">New game</button>
       </div>
@@ -329,7 +314,9 @@
       "?command=score_submit" +
       "&sig=106b52fa08a951ece479f210b6a27a4fe1dfab5ede7ddbebf3cdd4a3c7da35dc";
 
-    const MODES = {
+    // Optional: set this to your rank_get endpoint (command=rank_get&sig=...)
+    const TELEGRAM_RANK_ENDPOINT = "";
+const MODES = {
       casual: { id: "casual", digits: 3, maxGuesses: 30, lbKey: "number_guess_lb_casual_v2" },
       hard: { id: "hard", digits: 4, maxGuesses: 20, lbKey: "number_guess_lb_hard_v2" }
     };
@@ -347,16 +334,12 @@
       guesses: document.getElementById("guesses"),
       digitsHint: document.getElementById("digitsHint"),
       hint: document.getElementById("hint"),
-      leaderboard: document.getElementById("leaderboard"),
-      lbMode: document.getElementById("lbMode"),
-      lbSub: document.getElementById("lbSub"),
       winBackdrop: document.getElementById("winBackdrop"),
       loseBackdrop: document.getElementById("loseBackdrop"),
       finalGuesses: document.getElementById("finalGuesses"),
       finalTime: document.getElementById("finalTime"),
       finalScore: document.getElementById("finalScore"),
-      playerName: document.getElementById("playerName"),
-      saveBtn: document.getElementById("saveBtn"),
+      globalRank: document.getElementById("globalRank"),
       closeWin: document.getElementById("closeWin"),
       closeLose: document.getElementById("closeLose"),
       reveal: document.getElementById("reveal"),
@@ -404,10 +387,30 @@
         TELEGRAM_SCORE_ENDPOINT +
         "&s=" + encodeURIComponent(sess.sessionId) +
         "&t=" + encodeURIComponent(sess.token) +
-        "&score=" + encodeURIComponent(String(score));
+        "&score=" + encodeURIComponent(String(score)) +
+        "&mode=" + encodeURIComponent(mode.id);
 
       // Fire-and-forget
       fetch(submitUrl).catch(() => {});
+    }
+
+    async function fetchGlobalRank() {
+      if (!TELEGRAM_RANK_ENDPOINT) return null;
+      const sess = getTelegramSession();
+      if (!sess.sessionId || !sess.token) return null;
+
+      const url =
+        TELEGRAM_RANK_ENDPOINT +
+        "&s=" + encodeURIComponent(sess.sessionId) +
+        "&t=" + encodeURIComponent(sess.token);
+
+      try {
+        const r = await fetch(url);
+        const data = await r.json();
+        return data;
+      } catch {
+        return null;
+      }
     }
 
     // -------------------------------
@@ -434,15 +437,12 @@
       mode = nextMode;
       els.modeCasual.setAttribute("aria-pressed", String(mode.id === "casual"));
       els.modeHard.setAttribute("aria-pressed", String(mode.id === "hard"));
-      els.lbMode.textContent = mode.id === "casual" ? "Casual" : "Hard";
-      els.guessMax.textContent = String(mode.maxGuesses);
+els.guessMax.textContent = String(mode.maxGuesses);
       els.digitsHint.textContent = String(mode.digits);
       els.hint.innerHTML = `Enter <span id="digitsHint">${mode.digits}</span> different digits (0–9). No repeats.`;
       els.guessInput.maxLength = mode.digits;
       els.guessInput.placeholder = mode.digits === 3 ? "e.g. 507" : "e.g. 5072";
-      els.lbSub.textContent = "Top scores (this device)";
-      renderLeaderboard();
-      newGame();
+newGame();
     }
 
     function resetTimer() {
@@ -542,75 +542,8 @@
     }
 
     // -------------------------------
-    // Leaderboard (local)
-    // -------------------------------
-    function loadLB() {
-      try {
-        const raw = localStorage.getItem(mode.lbKey);
-        return raw ? JSON.parse(raw) : [];
-      } catch {
-        return [];
-      }
-    }
-
-    function saveLB(items) {
-      try {
-        localStorage.setItem(mode.lbKey, JSON.stringify(items));
-      } catch {}
-    }
-
-    function addToLeaderboard(name, guessesUsed, score) {
-      const items = loadLB();
-      items.push({ name, guesses: guessesUsed, score, ts: Date.now() });
-      items.sort((a, b) => (b.score - a.score) || (a.guesses - b.guesses) || (a.ts - b.ts));
-      saveLB(items.slice(0, 10));
-      renderLeaderboard();
-    }
-
-    function renderLeaderboard() {
-      const items = loadLB();
-      els.leaderboard.innerHTML = "";
-      if (!items.length) {
-        const p = document.createElement("p");
-        p.className = "lbEmpty";
-        p.textContent = "No scores yet. Win a round and save your name.";
-        els.leaderboard.appendChild(p);
-        return;
-      }
-
-      items.forEach((it, idx) => {
-        const item = document.createElement("div");
-        item.className = "lbItem";
-
-        const left = document.createElement("div");
-        left.className = "lbLeft";
-        const rank = document.createElement("div");
-        rank.className = "rank";
-        rank.textContent = String(idx + 1);
-        const info = document.createElement("div");
-        const nm = document.createElement("div");
-        nm.className = "lbName";
-        nm.textContent = it.name || "Anonymous";
-        const meta = document.createElement("div");
-        meta.className = "lbMeta";
-        meta.textContent = `Guesses: ${it.guesses} · Score: ${it.score}`;
-        info.appendChild(nm);
-        info.appendChild(meta);
-        left.appendChild(rank);
-        left.appendChild(info);
-
-        const right = document.createElement("div");
-        right.className = "chip";
-        right.textContent = `${it.score}`;
-
-        item.appendChild(left);
-        item.appendChild(right);
-        els.leaderboard.appendChild(item);
-      });
-    }
-
-    // -------------------------------
     // Game lifecycle
+
     // -------------------------------
     function newGame() {
       secret = randDigits(mode.digits);
@@ -660,11 +593,15 @@
 
         // Submit Telegram score if session exists
         submitTelegramScore(telegramScore);
-
-        els.playerName.value = "";
-        openModal(els.winBackdrop);
-        setTimeout(() => els.playerName.focus({ preventScroll: true }), 50);
-
+        els.globalRank.textContent = "…";
+        fetchGlobalRank().then((data) => {
+          if (data && data.ok && data.rank) {
+            els.globalRank.textContent = "#" + data.rank;
+          } else {
+            els.globalRank.textContent = "—";
+          }
+        });
+openModal(els.winBackdrop);
         updateStats();
         return;
       }
@@ -694,18 +631,7 @@
     els.guessInput.addEventListener("keydown", (e) => {
       if (e.key === "Enter") handleGuess();
     });
-
-    // Save local leaderboard
-    els.saveBtn.addEventListener("click", () => {
-      const name = (els.playerName.value || "").trim() || "Anonymous";
-      const elapsed = Date.now() - startTimeMs;
-      const score = computeTelegramScore(mode.id, guessCount, elapsed);
-      addToLeaderboard(name, guessCount, score);
-      closeModal(els.winBackdrop);
-      newGame();
-    });
-
-    els.closeWin.addEventListener("click", () => {
+els.closeWin.addEventListener("click", () => {
       closeModal(els.winBackdrop);
       newGame();
     });
@@ -736,7 +662,6 @@
     });
 
     // Init
-    renderLeaderboard();
     newGame();
   </script>
 </body>
