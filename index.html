@@ -1,93 +1,743 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Guess The Number - 3 Digit Game</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Guess The Number</title>
+
+  <!-- Telegram Games API (safe to include; enables shareScore when in Telegram) -->
+  <script src="https://telegram.org/js/games.js"></script>
+
+  <style>
+    :root{
+      --bg:#0b1220;
+      --card:#0f1a2f;
+      --muted:#9db0d0;
+      --text:#e7efff;
+      --accent:#4da3ff;
+      --good:#22c55e;
+      --bad:#ef4444;
+      --warning:#f59e0b;
+      --border:rgba(255,255,255,.08);
+      --shadow:0 12px 30px rgba(0,0,0,.35);
+      --radius:18px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,"Apple Color Emoji","Segoe UI Emoji";
+      background:radial-gradient(1200px 800px at 20% 10%, #132349 0%, var(--bg) 50%),
+                 radial-gradient(900px 700px at 90% 30%, #0f2b4c 0%, var(--bg) 55%);
+      color:var(--text);
+      min-height:100vh;
+      display:flex;
+      align-items:stretch;
+      justify-content:center;
+      padding:18px;
+    }
+    .wrap{width:min(980px,100%);}
+    header{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      align-items:flex-end;
+      justify-content:space-between;
+      margin:6px 6px 14px;
+    }
+    h1{margin:0;font-size:24px;letter-spacing:.3px}
+    .sub{margin:0;color:var(--muted);font-size:13px}
+
+    .grid{
+      display:grid;
+      grid-template-columns: 1.25fr .75fr;
+      gap:14px;
+    }
+    @media (max-width: 860px){
+      .grid{grid-template-columns:1fr;}
+    }
+
+    .card{
+      background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      overflow:hidden;
+    }
+    .card .hd{
+      padding:14px 16px;
+      border-bottom:1px solid var(--border);
+      display:flex;
+      gap:10px;
+      align-items:center;
+      justify-content:space-between;
+    }
+    .badge{
+      font-size:12px;
+      color:var(--muted);
+      padding:6px 10px;
+      border:1px solid var(--border);
+      border-radius:999px;
+      background:rgba(0,0,0,.18);
+      white-space:nowrap;
+    }
+
+    .body{padding:16px;}
+
+    .modeRow{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+    .modeBtn{
+      appearance:none;border:1px solid var(--border);
+      background:rgba(0,0,0,.18);color:var(--text);
+      padding:10px 12px;border-radius:14px;
+      cursor:pointer;font-weight:650;
+      display:flex;align-items:center;gap:8px;
+      transition:.15s transform, .15s border-color, .15s background;
+    }
+    .modeBtn:active{transform:scale(.98)}
+    .modeBtn[aria-pressed="true"]{
+      border-color:rgba(77,163,255,.55);
+      background:rgba(77,163,255,.12);
+    }
+
+    .stats{display:flex;gap:14px;flex-wrap:wrap;margin-top:12px;}
+    .stat{
+      flex:1 1 120px;
+      padding:10px 12px;
+      border:1px solid var(--border);
+      border-radius:14px;
+      background:rgba(0,0,0,.16);
+    }
+    .stat .k{font-size:12px;color:var(--muted)}
+    .stat .v{font-size:18px;font-weight:750;margin-top:2px}
+
+    .inputRow{display:flex;gap:10px;margin-top:14px;align-items:stretch;}
+    .guessInput{
+      flex:1;
+      font-size:18px;
+      padding:12px 14px;
+      border-radius:14px;
+      border:1px solid var(--border);
+      background:rgba(0,0,0,.22);
+      color:var(--text);
+      outline:none;
+    }
+    .guessInput:focus{border-color:rgba(77,163,255,.6)}
+
+    .btn{
+      appearance:none;
+      border:none;
+      border-radius:14px;
+      padding:12px 14px;
+      font-weight:750;
+      cursor:pointer;
+      transition:.15s transform, .15s filter;
+      user-select:none;
+    }
+    .btn:active{transform:scale(.98)}
+    .btnPrimary{background:var(--accent);color:#081427;}
+    .btnGhost{background:rgba(255,255,255,.08);border:1px solid var(--border);color:var(--text);}
+    .btnSmall{padding:10px 12px;font-size:13px;border-radius:12px}
+    .hint{margin:10px 2px 0;color:var(--muted);font-size:13px}
+
+    .list{margin-top:14px;display:flex;flex-direction:column;gap:10px}
+    .row{
+      border:1px solid var(--border);
+      border-radius:14px;
+      padding:10px 12px;
+      background:rgba(0,0,0,.16);
+      display:flex;
+      gap:10px;
+      align-items:center;
+      justify-content:space-between;
+      animation:pop .18s ease-out;
+    }
+    @keyframes pop{from{transform:scale(.985);opacity:.0}to{transform:scale(1);opacity:1}}
+
+    .guessTag{font-weight:800;letter-spacing:1px}
+    .clue{font-size:13px;color:var(--muted);margin-top:2px}
+    .left{display:flex;flex-direction:column}
+    .right{display:flex;gap:10px;align-items:center}
+    .chip{
+      font-size:12px;
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid var(--border);
+      background:rgba(0,0,0,.18);
+      color:var(--muted);
+      white-space:nowrap;
+    }
+    .chip.good{color:rgba(34,197,94,.95);border-color:rgba(34,197,94,.35);background:rgba(34,197,94,.08)}
+    .chip.bad{color:rgba(239,68,68,.95);border-color:rgba(239,68,68,.35);background:rgba(239,68,68,.08)}
+
+    /* Modal */
+    .modalBackdrop{
+      position:fixed;inset:0;
+      background:rgba(0,0,0,.55);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:18px;
+      z-index:20;
+    }
+    .modalBackdrop[aria-hidden="false"]{display:flex;}
+    .modal{
+      width:min(520px, 100%);
+      background:linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.04));
+      border:1px solid var(--border);
+      border-radius:20px;
+      box-shadow:var(--shadow);
+      padding:16px;
+    }
+    .modal h2{margin:0 0 8px}
+    .modal p{margin:8px 0;color:var(--muted)}
+    .modal .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+    @media (max-width:420px){.modal .grid2{grid-template-columns:1fr}}
+
+    .nameRow{display:flex;gap:10px;margin-top:12px}
+    .nameRow input{
+      flex:1;
+      border-radius:14px;
+      border:1px solid var(--border);
+      background:rgba(0,0,0,.22);
+      color:var(--text);
+      padding:12px 14px;
+      font-size:16px;
+      outline:none;
+    }
+    .nameRow input:focus{border-color:rgba(77,163,255,.6)}
+
+    /* Leaderboard */
+    .lbList{display:flex;flex-direction:column;gap:10px}
+    .lbEmpty{color:var(--muted);font-size:13px;margin:0}
+    .lbItem{
+      display:flex;align-items:center;justify-content:space-between;
+      border:1px solid var(--border);
+      border-radius:14px;
+      padding:10px 12px;
+      background:rgba(0,0,0,.16);
+    }
+    .rank{width:28px;height:28px;border-radius:10px;display:flex;align-items:center;justify-content:center;
+      background:rgba(255,255,255,.08);border:1px solid var(--border);font-weight:800;color:var(--muted)
+    }
+    .lbLeft{display:flex;gap:10px;align-items:center}
+    .lbName{font-weight:800}
+    .lbMeta{color:var(--muted);font-size:12px;margin-top:2px}
+
+    /* Tiny footer buttons */
+    .footBtns{display:flex;gap:10px;flex-wrap:wrap}
+
+  </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>🎯 Guess The Number</h1>
-            <p class="subtitle">Guess the 3-digit number (0-9, no repeats)</p>
-        </header>
+  <div class="wrap">
+    <header>
+      <div>
+        <h1>🎯 Guess The Number</h1>
+        <p class="sub">No repeated digits. Use clues to crack it fast.</p>
+      </div>
+      <div class="footBtns">
+        <button id="newGameBtn" class="btn btnGhost btnSmall">New game</button>
+        <button id="shareBtnTop" class="btn btnGhost btnSmall" title="Share score in Telegram" disabled>Share</button>
+      </div>
+    </header>
 
-        <main>
-            <!-- Game Section -->
-            <section class="game-section">
-                <div class="game-info">
-                    <div class="score-display">
-                        <span>Guesses: <strong id="guessCount">0</strong> / 15</span>
-                        <span class="timer-display">Time: <strong id="timerDisplay">0:00</strong></span>
-                    </div>
-                    <button id="newGameBtn" class="btn btn-secondary">New Game</button>
-                </div>
+    <div class="grid">
+      <!-- Game -->
+      <section class="card">
+        <div class="hd">
+          <div class="modeRow" aria-label="Mode selector">
+            <button id="modeCasual" class="modeBtn" aria-pressed="true">🙂 Casual <span class="badge">3 digits · 30 tries</span></button>
+            <button id="modeHard" class="modeBtn" aria-pressed="false">🔥 Hard <span class="badge">4 digits · 20 tries</span></button>
+          </div>
+        </div>
 
-                <div class="input-section">
-                    <label for="guessInput">Enter your guess:</label>
-                    <div class="input-group">
-                        <input 
-                            type="text" 
-                            id="guessInput" 
-                            maxlength="3" 
-                            placeholder="000"
-                            autocomplete="off"
-                        >
-                        <button id="submitBtn" class="btn btn-primary">Guess</button>
-                    </div>
-                    <p class="input-hint">Enter 3 different digits (0-9)</p>
-                </div>
+        <div class="body">
+          <div class="stats">
+            <div class="stat"><div class="k">Guesses</div><div class="v"><span id="guessCount">0</span> / <span id="guessMax">30</span></div></div>
+            <div class="stat"><div class="k">Time</div><div class="v" id="timer">0:00</div></div>
+            <div class="stat"><div class="k">Status</div><div class="v" id="status">Playing</div></div>
+          </div>
 
-                <!-- Guess History -->
-                <div class="guesses-section">
-                    <h2>Your Guesses</h2>
-                    <div id="guessesList" class="guesses-list"></div>
-                </div>
+          <div class="inputRow" style="margin-top:14px">
+            <input id="guessInput" class="guessInput" inputmode="numeric" autocomplete="off" placeholder="Enter digits" />
+            <button id="submitBtn" class="btn btnPrimary">Guess</button>
+          </div>
+          <div class="hint" id="hint">Enter <span id="digitsHint">3</span> different digits (0–9). No repeats.</div>
 
-                <!-- Win Modal -->
-                <div id="winModal" class="modal">
-                    <div class="modal-content">
-                        <h2>🎉 Congratulations! You Won!</h2>
-                        <p>You guessed the number in <strong id="finalGuessCount">0</strong> guesses!</p>
-                        <p>Time: <strong id="finalTime">0:00</strong></p>
-                        <p class="score-display-text">Score: <strong id="finalScore">0</strong> points</p>
-                        <div class="name-input-section">
-                            <label for="playerName">Enter your name:</label>
-                            <input 
-                                type="text" 
-                                id="playerName" 
-                                placeholder="Your name"
-                                maxlength="20"
-                            >
-                            <button id="saveScoreBtn" class="btn btn-primary">Save Score</button>
-                        </div>
-                    </div>
-                </div>
+          <div class="list" id="guesses"></div>
+        </div>
+      </section>
 
-                <!-- Game Over Modal -->
-                <div id="gameOverModal" class="modal">
-                    <div class="modal-content">
-                        <h2>😔 Game Over</h2>
-                        <p>You've reached the maximum of 15 guesses!</p>
-                        <p class="reveal-answer">The secret number was: <strong id="revealedNumber">000</strong></p>
-                        <button id="closeGameOverBtn" class="btn btn-primary">New Game</button>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Leaderboard Section -->
-            <section class="leaderboard-section">
-                <h2>🏆 Leaderboard</h2>
-                <div id="leaderboardList" class="leaderboard-list">
-                    <p class="empty-message">No scores yet. Be the first to play!</p>
-                </div>
-                <button id="clearLeaderboardBtn" class="btn btn-secondary btn-small">Clear Leaderboard</button>
-            </section>
-        </main>
+      <!-- Leaderboard -->
+      <aside class="card">
+        <div class="hd">
+          <div>
+            <div style="font-weight:900">🏆 Leaderboard</div>
+            <div class="sub" id="lbSub">Top scores (this device)</div>
+          </div>
+          <span class="badge" id="lbMode">Casual</span>
+        </div>
+        <div class="body">
+          <div class="lbList" id="leaderboard">
+            <p class="lbEmpty">No scores yet. Win a round and save your name.</p>
+          </div>
+        </div>
+      </aside>
     </div>
+  </div>
 
-    <script src="script.js"></script>
+  <!-- Win Modal -->
+  <div class="modalBackdrop" id="winBackdrop" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="winTitle">
+      <h2 id="winTitle">🎉 You won!</h2>
+      <p>
+        You solved it in <b><span id="finalGuesses">0</span></b> guesses.
+        Time: <b><span id="finalTime">0:00</span></b>
+      </p>
+      <p>Score: <b><span id="finalScore">0</span></b></p>
+
+      <div class="nameRow">
+        <input id="playerName" maxlength="20" placeholder="Your name" />
+        <button id="saveBtn" class="btn btnPrimary">Save</button>
+      </div>
+
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;justify-content:flex-end">
+        <button id="shareBtn" class="btn btnGhost">Share score</button>
+        <button id="closeWin" class="btn btnPrimary">New game</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lose Modal -->
+  <div class="modalBackdrop" id="loseBackdrop" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="loseTitle">
+      <h2 id="loseTitle">😅 Game over</h2>
+      <p>You used all guesses. The secret was <b><span id="reveal">000</span></b>.</p>
+      <div style="display:flex;justify-content:flex-end;margin-top:10px">
+        <button id="closeLose" class="btn btnPrimary">Try again</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // -------------------------------
+    // Configuration
+    // -------------------------------
+
+    // Telegram score submit endpoint (safe to embed; requires per-session s+t)
+    const TELEGRAM_SCORE_ENDPOINT =
+      "https://prod-api.telebothost.com/ownlang/webhook/74081756" +
+      "?command=score_submit" +
+      "&sig=106b52fa08a951ece479f210b6a27a4fe1dfab5ede7ddbebf3cdd4a3c7da35dc";
+
+    const MODES = {
+      casual: { id: "casual", digits: 3, maxGuesses: 30, lbKey: "number_guess_lb_casual_v2" },
+      hard: { id: "hard", digits: 4, maxGuesses: 20, lbKey: "number_guess_lb_hard_v2" }
+    };
+
+    const els = {
+      modeCasual: document.getElementById("modeCasual"),
+      modeHard: document.getElementById("modeHard"),
+      guessCount: document.getElementById("guessCount"),
+      guessMax: document.getElementById("guessMax"),
+      timer: document.getElementById("timer"),
+      status: document.getElementById("status"),
+      guessInput: document.getElementById("guessInput"),
+      submitBtn: document.getElementById("submitBtn"),
+      newGameBtn: document.getElementById("newGameBtn"),
+      guesses: document.getElementById("guesses"),
+      digitsHint: document.getElementById("digitsHint"),
+      hint: document.getElementById("hint"),
+      leaderboard: document.getElementById("leaderboard"),
+      lbMode: document.getElementById("lbMode"),
+      lbSub: document.getElementById("lbSub"),
+      winBackdrop: document.getElementById("winBackdrop"),
+      loseBackdrop: document.getElementById("loseBackdrop"),
+      finalGuesses: document.getElementById("finalGuesses"),
+      finalTime: document.getElementById("finalTime"),
+      finalScore: document.getElementById("finalScore"),
+      playerName: document.getElementById("playerName"),
+      saveBtn: document.getElementById("saveBtn"),
+      closeWin: document.getElementById("closeWin"),
+      closeLose: document.getElementById("closeLose"),
+      reveal: document.getElementById("reveal"),
+      shareBtn: document.getElementById("shareBtn"),
+      shareBtnTop: document.getElementById("shareBtnTop")
+    };
+
+    // -------------------------------
+    // State
+    // -------------------------------
+    let mode = MODES.casual;
+    let secret = "";
+    let guessCount = 0;
+    let startTimeMs = 0;
+    let timerHandle = null;
+    let gameOver = false;
+
+    // -------------------------------
+    // Telegram helpers
+    // -------------------------------
+    function isTelegramGameContext() {
+      return typeof TelegramGameProxy !== "undefined" && TelegramGameProxy;
+    }
+
+    function getTelegramSession() {
+      const qs = new URLSearchParams(window.location.search);
+      return { sessionId: qs.get("s"), token: qs.get("t") };
+    }
+
+    function computeTelegramScore(modeId, guessesUsed, elapsedMs) {
+      const timeSec = Math.floor(elapsedMs / 1000);
+      const maxGuesses = (modeId === "hard") ? 20 : 30;
+      const maxTimeSec = 600; // 10 min cap
+
+      const guessScore = Math.max(0, (maxGuesses - guessesUsed) * 100);
+      const timeBonus = Math.max(0, maxTimeSec - timeSec);
+      return guessScore + timeBonus;
+    }
+
+    function submitTelegramScore(score) {
+      const sess = getTelegramSession();
+      if (!sess.sessionId || !sess.token) return;
+
+      const submitUrl =
+        TELEGRAM_SCORE_ENDPOINT +
+        "&s=" + encodeURIComponent(sess.sessionId) +
+        "&t=" + encodeURIComponent(sess.token) +
+        "&score=" + encodeURIComponent(String(score));
+
+      // Fire-and-forget
+      fetch(submitUrl).catch(() => {});
+    }
+
+    // -------------------------------
+    // Core game
+    // -------------------------------
+    function randDigits(n) {
+      const digits = Array.from({ length: 10 }, (_, i) => String(i));
+      // Fisher-Yates shuffle
+      for (let i = digits.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [digits[i], digits[j]] = [digits[j], digits[i]];
+      }
+      return digits.slice(0, n).join("");
+    }
+
+    function formatTime(ms) {
+      const s = Math.floor(ms / 1000);
+      const m = Math.floor(s / 60);
+      const r = String(s % 60).padStart(2, "0");
+      return `${m}:${r}`;
+    }
+
+    function setMode(nextMode) {
+      mode = nextMode;
+      els.modeCasual.setAttribute("aria-pressed", String(mode.id === "casual"));
+      els.modeHard.setAttribute("aria-pressed", String(mode.id === "hard"));
+      els.lbMode.textContent = mode.id === "casual" ? "Casual" : "Hard";
+      els.guessMax.textContent = String(mode.maxGuesses);
+      els.digitsHint.textContent = String(mode.digits);
+      els.hint.innerHTML = `Enter <span id="digitsHint">${mode.digits}</span> different digits (0–9). No repeats.`;
+      els.guessInput.maxLength = mode.digits;
+      els.guessInput.placeholder = mode.digits === 3 ? "e.g. 507" : "e.g. 5072";
+      els.lbSub.textContent = "Top scores (this device)";
+      renderLeaderboard();
+      newGame();
+    }
+
+    function resetTimer() {
+      if (timerHandle) clearInterval(timerHandle);
+      startTimeMs = Date.now();
+      els.timer.textContent = "0:00";
+      timerHandle = setInterval(() => {
+        els.timer.textContent = formatTime(Date.now() - startTimeMs);
+      }, 250);
+    }
+
+    function stopTimer() {
+      if (timerHandle) clearInterval(timerHandle);
+      timerHandle = null;
+    }
+
+    function updateStats() {
+      els.guessCount.textContent = String(guessCount);
+      els.status.textContent = gameOver ? "Finished" : "Playing";
+    }
+
+    function openModal(backdrop) {
+      backdrop.setAttribute("aria-hidden", "false");
+    }
+
+    function closeModal(backdrop) {
+      backdrop.setAttribute("aria-hidden", "true");
+    }
+
+    function validateGuess(g) {
+      const clean = (g || "").trim();
+      if (clean.length !== mode.digits) return { ok: false, msg: `Enter exactly ${mode.digits} digits.` };
+      if (!/^\d+$/.test(clean)) return { ok: false, msg: "Digits only (0–9)." };
+      const set = new Set(clean.split(""));
+      if (set.size !== clean.length) return { ok: false, msg: "No repeated digits." };
+      return { ok: true, value: clean };
+    }
+
+    // Returns {correctPos, correctDigits}
+    function scoreGuess(guess, answer) {
+      let correctPos = 0;
+      for (let i = 0; i < guess.length; i++) {
+        if (guess[i] === answer[i]) correctPos++;
+      }
+      let correctDigits = 0;
+      for (const ch of guess) {
+        if (answer.includes(ch)) correctDigits++;
+      }
+      return { correctPos, correctDigits };
+    }
+
+    function clueText(cp, cd) {
+      if (cd === 0) return "0 correct digits";
+      if (cd === cp) return `${cd} correct digit${cd > 1 ? "s" : ""}, ${cp} correct position${cp > 1 ? "s" : ""}`;
+      return `${cd} correct digit${cd > 1 ? "s" : ""}, ${cp} correct position${cp > 1 ? "s" : ""}`;
+    }
+
+    function addGuessRow(guess, cp, cd) {
+      const row = document.createElement("div");
+      row.className = "row";
+
+      const left = document.createElement("div");
+      left.className = "left";
+      const tag = document.createElement("div");
+      tag.className = "guessTag";
+      tag.textContent = guess;
+      const clue = document.createElement("div");
+      clue.className = "clue";
+      clue.textContent = clueText(cp, cd);
+      left.appendChild(tag);
+      left.appendChild(clue);
+
+      const right = document.createElement("div");
+      right.className = "right";
+      const chip1 = document.createElement("span");
+      chip1.className = "chip";
+      chip1.textContent = `Digits: ${cd}`;
+      const chip2 = document.createElement("span");
+      chip2.className = "chip";
+      chip2.textContent = `Pos: ${cp}`;
+
+      if (cd === mode.digits && cp === mode.digits) {
+        chip1.classList.add("good");
+        chip2.classList.add("good");
+      } else if (cd > 0) {
+        chip1.classList.add("good");
+      } else {
+        chip1.classList.add("bad");
+      }
+
+      right.appendChild(chip1);
+      right.appendChild(chip2);
+
+      row.appendChild(left);
+      row.appendChild(right);
+      els.guesses.prepend(row);
+    }
+
+    // -------------------------------
+    // Leaderboard (local)
+    // -------------------------------
+    function loadLB() {
+      try {
+        const raw = localStorage.getItem(mode.lbKey);
+        return raw ? JSON.parse(raw) : [];
+      } catch {
+        return [];
+      }
+    }
+
+    function saveLB(items) {
+      try {
+        localStorage.setItem(mode.lbKey, JSON.stringify(items));
+      } catch {}
+    }
+
+    function addToLeaderboard(name, guessesUsed, score) {
+      const items = loadLB();
+      items.push({ name, guesses: guessesUsed, score, ts: Date.now() });
+      items.sort((a, b) => (b.score - a.score) || (a.guesses - b.guesses) || (a.ts - b.ts));
+      saveLB(items.slice(0, 10));
+      renderLeaderboard();
+    }
+
+    function renderLeaderboard() {
+      const items = loadLB();
+      els.leaderboard.innerHTML = "";
+      if (!items.length) {
+        const p = document.createElement("p");
+        p.className = "lbEmpty";
+        p.textContent = "No scores yet. Win a round and save your name.";
+        els.leaderboard.appendChild(p);
+        return;
+      }
+
+      items.forEach((it, idx) => {
+        const item = document.createElement("div");
+        item.className = "lbItem";
+
+        const left = document.createElement("div");
+        left.className = "lbLeft";
+        const rank = document.createElement("div");
+        rank.className = "rank";
+        rank.textContent = String(idx + 1);
+        const info = document.createElement("div");
+        const nm = document.createElement("div");
+        nm.className = "lbName";
+        nm.textContent = it.name || "Anonymous";
+        const meta = document.createElement("div");
+        meta.className = "lbMeta";
+        meta.textContent = `Guesses: ${it.guesses} · Score: ${it.score}`;
+        info.appendChild(nm);
+        info.appendChild(meta);
+        left.appendChild(rank);
+        left.appendChild(info);
+
+        const right = document.createElement("div");
+        right.className = "chip";
+        right.textContent = `${it.score}`;
+
+        item.appendChild(left);
+        item.appendChild(right);
+        els.leaderboard.appendChild(item);
+      });
+    }
+
+    // -------------------------------
+    // Game lifecycle
+    // -------------------------------
+    function newGame() {
+      secret = randDigits(mode.digits);
+      guessCount = 0;
+      gameOver = false;
+      els.guesses.innerHTML = "";
+      els.guessInput.value = "";
+      els.reveal.textContent = secret;
+
+      resetTimer();
+      updateStats();
+
+      // Share is only meaningful inside Telegram
+      const canShare = isTelegramGameContext();
+      els.shareBtn.disabled = !canShare;
+      els.shareBtnTop.disabled = !canShare;
+
+      els.guessInput.focus({ preventScroll: true });
+    }
+
+    function handleGuess() {
+      if (gameOver) return;
+
+      const v = validateGuess(els.guessInput.value);
+      if (!v.ok) {
+        els.status.textContent = v.msg;
+        return;
+      }
+
+      guessCount++;
+      els.guessInput.value = "";
+
+      const { correctPos, correctDigits } = scoreGuess(v.value, secret);
+      addGuessRow(v.value, correctPos, correctDigits);
+
+      // Win
+      if (correctDigits === mode.digits && correctPos === mode.digits) {
+        stopTimer();
+        gameOver = true;
+
+        const elapsed = Date.now() - startTimeMs;
+        const telegramScore = computeTelegramScore(mode.id, guessCount, elapsed);
+
+        els.finalGuesses.textContent = String(guessCount);
+        els.finalTime.textContent = formatTime(elapsed);
+        els.finalScore.textContent = String(telegramScore);
+
+        // Submit Telegram score if session exists
+        submitTelegramScore(telegramScore);
+
+        els.playerName.value = "";
+        openModal(els.winBackdrop);
+        setTimeout(() => els.playerName.focus({ preventScroll: true }), 50);
+
+        updateStats();
+        return;
+      }
+
+      // Lose
+      if (guessCount >= mode.maxGuesses) {
+        stopTimer();
+        gameOver = true;
+        openModal(els.loseBackdrop);
+        updateStats();
+        return;
+      }
+
+      updateStats();
+      els.status.textContent = "Playing";
+    }
+
+    // -------------------------------
+    // Events
+    // -------------------------------
+    els.modeCasual.addEventListener("click", () => setMode(MODES.casual));
+    els.modeHard.addEventListener("click", () => setMode(MODES.hard));
+
+    els.newGameBtn.addEventListener("click", () => newGame());
+
+    els.submitBtn.addEventListener("click", handleGuess);
+    els.guessInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") handleGuess();
+    });
+
+    // Save local leaderboard
+    els.saveBtn.addEventListener("click", () => {
+      const name = (els.playerName.value || "").trim() || "Anonymous";
+      const elapsed = Date.now() - startTimeMs;
+      const score = computeTelegramScore(mode.id, guessCount, elapsed);
+      addToLeaderboard(name, guessCount, score);
+      closeModal(els.winBackdrop);
+      newGame();
+    });
+
+    els.closeWin.addEventListener("click", () => {
+      closeModal(els.winBackdrop);
+      newGame();
+    });
+
+    els.closeLose.addEventListener("click", () => {
+      closeModal(els.loseBackdrop);
+      newGame();
+    });
+
+    // Share score (Telegram)
+    function shareScore() {
+      try {
+        if (isTelegramGameContext()) {
+          TelegramGameProxy.shareScore();
+        }
+      } catch {}
+    }
+
+    els.shareBtn.addEventListener("click", shareScore);
+    els.shareBtnTop.addEventListener("click", shareScore);
+
+    // Close modals by tapping outside
+    els.winBackdrop.addEventListener("click", (e) => {
+      if (e.target === els.winBackdrop) closeModal(els.winBackdrop);
+    });
+    els.loseBackdrop.addEventListener("click", (e) => {
+      if (e.target === els.loseBackdrop) closeModal(els.loseBackdrop);
+    });
+
+    // Init
+    renderLeaderboard();
+    newGame();
+  </script>
 </body>
 </html>
-
