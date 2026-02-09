@@ -359,6 +359,7 @@ const MODES = {
     let startTimeMs = 0;
     let timerHandle = null;
     let gameOver = false;
+    let roundStartMs = null; // start counting only after first valid guess
 
     // -------------------------------
     // Telegram helpers
@@ -373,14 +374,16 @@ const MODES = {
     }
 
     function computeTelegramScore(modeId, guessesUsed, elapsedMs) {
-      const timeSec = Math.floor(elapsedMs / 1000);
-      const maxGuesses = (modeId === "hard") ? 20 : 30;
-      const maxTimeSec = 600; // 10 min cap
+  const secondsUsed = Math.floor(elapsedMs / 1000);
 
-      const guessScore = Math.max(0, (maxGuesses - guessesUsed) * 100);
-      const timeBonus = Math.max(0, maxTimeSec - timeSec);
-      return guessScore + timeBonus;
-    }
+  const baseScore  = (modeId === "hard") ? 5000 : 3000;
+  const baseSecond = (modeId === "hard") ? 180  : 120; // tune this
+
+  const timeBonus = Math.max(0, baseSecond - secondsUsed);
+  const score = baseScore - (guessesUsed - 1) * 100 + timeBonus;
+
+  return Math.max(0, Math.floor(score)); // keep integer, prevent negative
+}
 
     function submitTelegramScore(score) {
       const sess = getTelegramSession();
@@ -451,10 +454,16 @@ newGame();
 
     function resetTimer() {
       if (timerHandle) clearInterval(timerHandle);
-      startTimeMs = Date.now();
+      timerHandle = null;
+      roundStartMs = null;
       els.timer.textContent = "0:00";
+    }
+
+    function startTimerIfNeeded() {
+      if (roundStartMs !== null) return;
+      roundStartMs = Date.now();
       timerHandle = setInterval(() => {
-        els.timer.textContent = formatTime(Date.now() - startTimeMs);
+        els.timer.textContent = formatTime(Date.now() - roundStartMs);
       }, 250);
     }
 
@@ -577,6 +586,8 @@ newGame();
         return;
       }
 
+      startTimerIfNeeded(); // ✅ start timing only when player actually begins
+
       guessCount++;
       els.guessInput.value = "";
 
@@ -588,7 +599,7 @@ newGame();
         stopTimer();
         gameOver = true;
 
-        const elapsed = Date.now() - startTimeMs;
+        const elapsed = roundStartMs ? (Date.now() - roundStartMs) : 0;
         const telegramScore = computeTelegramScore(mode.id, guessCount, elapsed);
 
         els.finalGuesses.textContent = String(guessCount);
