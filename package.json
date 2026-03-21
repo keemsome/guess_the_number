@@ -1,0 +1,14 @@
+{
+  "name": "guess-the-number",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "db:apply:local": "wrangler d1 execute DB --local --file=schema.sql",
+    "db:apply:remote": "wrangler d1 execute DB --remote --file=schema.sql"
+  },
+  "devDependencies": {
+    "wrangler": "^4.45.0"
+  }
+}

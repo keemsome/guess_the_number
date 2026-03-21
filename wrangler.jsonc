@@ -1,0 +1,24 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "guess-the-number",
+  "main": "src/index.js",
+  "compatibility_date": "2026-03-21",
+  "observability": {
+    "enabled": true
+  },
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS"
+  },
+  "vars": {
+    "GAME_SHORT_NAME": "guessdanumber_bot",
+    "PUBLIC_BASE_URL": "https://guess-the-number.guessdanumber-openclaw.workers.dev"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "guess-the-number-db",
+      "database_id": "1b6877dc-27ce-4cbf-a604-9a8aaf844e5a"
+    }
+  ]
+}
