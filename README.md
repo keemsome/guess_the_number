@@ -5,6 +5,7 @@ A Telegram Game with:
 - global leaderboard
 - web Top 10 leaderboard for both modes
 - guest name submission for non-Telegram winners
+- header share icons for Facebook, X, and Telegram
 - rank shown in the win modal
 - direct-message leaderboard summary after each accepted Telegram score
 - automatic 2-week seasonal reset with 30-day leaderboard retention

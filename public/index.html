@@ -185,16 +185,10 @@
       font-size: 18px;
       line-height: 1;
     }
-    .shareOptions {
-      display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
-      margin-top: 12px;
-    }
     .shareOption {
-      width: 56px;
-      height: 56px;
-      border-radius: 18px;
+      width: 42px;
+      height: 42px;
+      border-radius: 14px;
       border: 1px solid var(--border);
       background: rgba(255, 255, 255, 0.08);
       color: var(--text);
@@ -369,9 +363,9 @@
       </div>
       <div class="footBtns">
         <button id="newGameBtn" class="btn btnGhost btnSmall">New game</button>
-        <button id="shareBtnTop" class="btn btnGhost btnSmall iconBtn" title="Share" aria-label="Share">
-          <span aria-hidden="true">↗</span>
-        </button>
+        <button id="shareFacebookBtn" class="shareOption facebook" aria-label="Share to Facebook" title="Share to Facebook">f</button>
+        <button id="shareXBtn" class="shareOption x" aria-label="Share to X" title="Share to X">X</button>
+        <button id="shareTelegramBtn" class="shareOption telegram" aria-label="Share to Telegram" title="Share to Telegram">Tg</button>
       </div>
     </header>
 
@@ -435,9 +429,6 @@
       </div>
 
       <div class="modalActions">
-        <button id="shareBtn" class="btn btnGhost iconBtn" title="Share" aria-label="Share">
-          <span aria-hidden="true">↗</span>
-        </button>
         <button id="closeWin" class="btn btnPrimary">New game</button>
       </div>
     </div>
@@ -449,21 +440,6 @@
       <p>You used all guesses. The secret was <b><span id="reveal">000</span></b>.</p>
       <div class="modalActions">
         <button id="closeLose" class="btn btnPrimary">Try again</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="modalBackdrop" id="shareBackdrop" aria-hidden="true">
-    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="shareTitle">
-      <h2 id="shareTitle">Share</h2>
-      <p>Share this game or your latest score.</p>
-      <div class="shareOptions">
-        <button id="shareFacebookBtn" class="shareOption facebook" aria-label="Share to Facebook" title="Facebook">f</button>
-        <button id="shareXBtn" class="shareOption x" aria-label="Share to X" title="X">X</button>
-        <button id="shareTelegramBtn" class="shareOption telegram" aria-label="Share to Telegram" title="Telegram">Tg</button>
-      </div>
-      <div class="modalActions">
-        <button id="closeShare" class="btn btnPrimary">Close</button>
       </div>
     </div>
   </div>
@@ -497,7 +473,6 @@
       leaderboardList: document.getElementById("leaderboardList"),
       winBackdrop: document.getElementById("winBackdrop"),
       loseBackdrop: document.getElementById("loseBackdrop"),
-      shareBackdrop: document.getElementById("shareBackdrop"),
       finalGuesses: document.getElementById("finalGuesses"),
       finalTime: document.getElementById("finalTime"),
       finalScore: document.getElementById("finalScore"),
@@ -505,12 +480,9 @@
       closeWin: document.getElementById("closeWin"),
       closeLose: document.getElementById("closeLose"),
       reveal: document.getElementById("reveal"),
-      shareBtn: document.getElementById("shareBtn"),
-      shareBtnTop: document.getElementById("shareBtnTop"),
       shareFacebookBtn: document.getElementById("shareFacebookBtn"),
       shareXBtn: document.getElementById("shareXBtn"),
       shareTelegramBtn: document.getElementById("shareTelegramBtn"),
-      closeShare: document.getElementById("closeShare"),
       guestForm: document.getElementById("guestForm"),
       guestNameInput: document.getElementById("guestNameInput"),
       guestSaveBtn: document.getElementById("guestSaveBtn"),
@@ -745,12 +717,8 @@
       return "Try Guess The Number and see if you can crack the code.";
     }
 
-    function openShareModal() {
-      openModal(els.shareBackdrop);
-    }
-
-    function closeShareModal() {
-      closeModal(els.shareBackdrop);
+    function getTelegramGameUrl() {
+      return "https://t.me/guessdanumber_bot?game=guessdanumber_bot";
     }
 
     function openShareTarget(target) {
@@ -763,7 +731,9 @@
       } else if (target === "x") {
         shareUrl = `https://x.com/intent/tweet?url=${url}&text=${text}`;
       } else if (target === "telegram") {
-        shareUrl = `https://t.me/share/url?url=${url}&text=${text}`;
+        const telegramText = encodeURIComponent("Play Guess The Number with @guessdanumber_bot");
+        const telegramUrl = encodeURIComponent(getTelegramGameUrl());
+        shareUrl = `https://t.me/share/url?url=${telegramUrl}&text=${telegramText}`;
       }
 
       if (shareUrl) {
@@ -1035,12 +1005,9 @@
     els.modeHard.addEventListener("click", () => setMode(MODES.hard));
     els.newGameBtn.addEventListener("click", newGame);
     els.submitBtn.addEventListener("click", handleGuess);
-    els.shareBtn.addEventListener("click", openShareModal);
-    els.shareBtnTop.addEventListener("click", openShareModal);
     els.shareFacebookBtn.addEventListener("click", () => openShareTarget("facebook"));
     els.shareXBtn.addEventListener("click", () => openShareTarget("x"));
     els.shareTelegramBtn.addEventListener("click", () => openShareTarget("telegram"));
-    els.closeShare.addEventListener("click", closeShareModal);
     els.guestSaveBtn.addEventListener("click", () => void handleGuestSave());
 
     els.guessInput.addEventListener("input", () => {
@@ -1067,10 +1034,6 @@
     els.closeLose.addEventListener("click", () => {
       closeModal(els.loseBackdrop);
       newGame();
-    });
-
-    els.shareBackdrop.addEventListener("click", (event) => {
-      if (event.target === els.shareBackdrop) closeShareModal();
     });
 
     els.winBackdrop.addEventListener("click", (event) => {
