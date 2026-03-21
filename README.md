@@ -3,8 +3,11 @@
 A Telegram Game with:
 - Casual and Hard modes
 - global leaderboard
+- web Top 10 leaderboard for both modes
+- guest name submission for non-Telegram winners
 - rank shown in the win modal
-- direct-message leaderboard summary after each accepted score
+- direct-message leaderboard summary after each accepted Telegram score
+- automatic 2-week seasonal reset with 30-day leaderboard retention
 
 The project now runs as a single Cloudflare Workers app:
 - static UI from [`public/index.html`](./public/index.html)
@@ -31,9 +34,11 @@ The project now runs as a single Cloudflare Workers app:
 6. Put the returned `database_id` into [`wrangler.jsonc`](./wrangler.jsonc).
 7. Apply the schema:
    `npm run db:apply:local`
-8. Start local dev:
+8. If you are upgrading an existing live database, run:
+   `npm run db:migrate:seasonal:remote`
+9. Start local dev:
    `npm run dev`
-9. Deploy:
+10. Deploy:
    `npm run deploy`
 
 After deploy:
@@ -47,9 +52,12 @@ Example webhook command:
 
 - `/start`, `/help`, `/play`, `/globaltop`, and `/myrank` are handled directly by the Worker
 - score submissions go to `POST /api/score_submit`
+- guest score submissions go to `POST /api/guest_score_submit`
 - rank lookups go to `GET /api/rank_get`
+- page Top 10 data loads from `GET /api/leaderboard`
 - each launched session can submit only one accepted score
 - session tokens are hashed before storage
+- leaderboard resets every 2 weeks by season and old entries are pruned after 30 days
 
 ## Notes
 

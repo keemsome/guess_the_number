@@ -1,6 +1,9 @@
 const SESSION_TTL_MS = 15 * 60 * 1000;
 const MAX_SCORE = 50_000;
 const TOP_LIMIT = 10;
+const SEASON_MS = 14 * 24 * 60 * 60 * 1000;
+const LEADERBOARD_RETENTION_MS = 30 * 24 * 60 * 60 * 1000;
+const GUEST_NAME_MAX_LENGTH = 20;
 
 export default {
   async fetch(request, env) {
@@ -14,8 +17,16 @@ export default {
       return handleScoreSubmit(request, env);
     }
 
+    if (url.pathname === "/api/guest_score_submit" && request.method === "POST") {
+      return handleGuestScoreSubmit(request, env);
+    }
+
     if (url.pathname === "/api/rank_get" && request.method === "GET") {
       return handleRankGet(request, env);
+    }
+
+    if (url.pathname === "/api/leaderboard" && request.method === "GET") {
+      return handleLeaderboardGet(request, env);
     }
 
     if (env.ASSETS) {
@@ -23,6 +34,10 @@ export default {
     }
 
     return new Response("Not found", { status: 404 });
+  },
+
+  async scheduled(_controller, env, ctx) {
+    ctx.waitUntil(runMaintenance(env.DB));
   }
 };
 
@@ -48,6 +63,7 @@ async function handleMessage(message, env) {
   const [command, arg] = text.split(/\s+/, 2);
   const normalized = command.split("@")[0].toLowerCase();
   const chatId = message.chat.id;
+  const season = getSeasonInfo();
 
   if (normalized === "/start") {
     return telegramApi(env, "sendMessage", {
@@ -89,11 +105,11 @@ async function handleMessage(message, env) {
 
   if (normalized === "/globaltop") {
     const mode = normMode(arg);
-    const lines = await getTopLines(env.DB, mode, TOP_LIMIT);
+    const entries = await getTopEntries(env.DB, mode, season.key, TOP_LIMIT);
     const title = mode === "hard" ? "🔥 Global Top 10 — Hard" : "🙂 Global Top 10 — Casual";
-    const textBody = lines.length
-      ? lines.map((entry, index) => `${index + 1}. ${entry.name} — ${entry.score}`).join("\n")
-      : "No scores yet.";
+    const textBody = entries.length
+      ? entries.map((entry, index) => `${index + 1}. ${entry.name} — ${entry.score}`).join("\n")
+      : "No scores yet this season.";
 
     return telegramApi(env, "sendMessage", {
       chat_id: chatId,
@@ -104,12 +120,12 @@ async function handleMessage(message, env) {
   if (normalized === "/myrank") {
     const mode = normMode(arg);
     const userId = String(message.from.id);
-    const best = await getBestEntryForUser(env.DB, userId, mode);
+    const best = await getBestEntryForUser(env.DB, userId, mode, season.key);
 
     if (!best) {
       return telegramApi(env, "sendMessage", {
         chat_id: chatId,
-        text: `No global score yet for ${mode === "hard" ? "Hard" : "Casual"}. Play a round first 🎯`
+        text: `No global score yet this season for ${mode === "hard" ? "Hard" : "Casual"}. Play a round first 🎯`
       });
     }
 
@@ -217,40 +233,101 @@ async function handleScoreSubmit(request, env) {
     return json({ ok: false, error: "already_submitted" }, 409);
   }
 
+  const season = getSeasonInfo(now);
   const submitId = `${session.user_id}:${now}:${crypto.randomUUID()}`;
   const displayName = displayNameFromSession(session);
+  const entry = makeLeaderboardEntry({
+    submitId,
+    mode,
+    seasonKey: season.key,
+    playerSource: "telegram",
+    userId: String(session.user_id),
+    name: displayName,
+    score,
+    createdAt: now
+  });
 
-  await env.DB.prepare(
-    "INSERT INTO leaderboard_entries (submit_id, mode, user_id, name, score, created_at) VALUES (?, ?, ?, ?, ?, ?)"
-  ).bind(submitId, mode, String(session.user_id), displayName, score, now).run();
-
+  await insertLeaderboardEntry(env.DB, entry);
   await env.DB.prepare(
     "UPDATE sessions SET last_mode = ?, last_submit_id = ?, last_score = ? WHERE session_id = ?"
   ).bind(mode, submitId, score, sessionId).run();
 
-  const entry = {
-    submit_id: submitId,
-    mode,
-    user_id: String(session.user_id),
-    name: displayName,
-    score,
-    created_at: now
-  };
-
   const rank = await getRankForEntry(env.DB, entry);
-  const totalRow = await env.DB.prepare(
-    "SELECT COUNT(*) AS count FROM leaderboard_entries WHERE mode = ?"
-  ).bind(mode).first();
+  const total = await countSeasonEntries(env.DB, mode, season.key);
 
   await setTelegramGameScore(env, session, score);
-  await sendRankDirectMessage(env, session.user_id, mode, submitId, rank, score, env.DB);
+  await sendRankDirectMessage(env, session.user_id, mode, season.key, submitId, rank, score, env.DB);
 
   return json({
     ok: true,
     mode,
+    season_key: season.key,
     score,
     rank,
-    total: Number(totalRow?.count || 0)
+    total
+  });
+}
+
+async function handleGuestScoreSubmit(request, env) {
+  const body = await request.json().catch(() => null);
+  if (!body) return json({ ok: false, error: "bad_request" }, 400);
+
+  const mode = normMode(body.mode);
+  const score = Number.parseInt(body.score, 10);
+  const normalizedName = normalizeGuestName(body.name);
+
+  if (!Number.isFinite(score) || score < 0 || score > MAX_SCORE) {
+    return json({ ok: false, error: "invalid_score" }, 400);
+  }
+
+  if (!normalizedName.ok) {
+    return json({ ok: false, error: "invalid_name", message: normalizedName.message }, 400);
+  }
+
+  const season = getSeasonInfo();
+  const topEntries = await getTopEntries(env.DB, mode, season.key, TOP_LIMIT);
+  if (!scoreQualifiesForTop(topEntries, score)) {
+    return json({
+      ok: false,
+      error: "not_qualified",
+      minimum_score_to_qualify: getMinimumScoreToQualify(topEntries)
+    }, 409);
+  }
+
+  const now = Date.now();
+  const submitId = `guest:${now}:${crypto.randomUUID()}`;
+  const entry = makeLeaderboardEntry({
+    submitId,
+    mode,
+    seasonKey: season.key,
+    playerSource: "guest",
+    userId: `guest:${submitId}`,
+    name: normalizedName.value,
+    score,
+    createdAt: now
+  });
+
+  await insertLeaderboardEntry(env.DB, entry);
+
+  const rank = await getRankForEntry(env.DB, entry);
+  if (rank > TOP_LIMIT) {
+    await deleteLeaderboardEntry(env.DB, submitId);
+    return json({
+      ok: false,
+      error: "not_qualified",
+      minimum_score_to_qualify: getMinimumScoreToQualify(await getTopEntries(env.DB, mode, season.key, TOP_LIMIT))
+    }, 409);
+  }
+
+  const entries = await getTopEntries(env.DB, mode, season.key, TOP_LIMIT);
+  return json({
+    ok: true,
+    mode,
+    season_key: season.key,
+    rank,
+    score,
+    total: await countSeasonEntries(env.DB, mode, season.key),
+    entries: serializeLeaderboard(entries)
   });
 }
 
@@ -271,48 +348,61 @@ async function handleRankGet(request, env) {
     return json({ ok: false, error: "expired" }, 403);
   }
 
+  const season = getSeasonInfo();
+  const total = await countSeasonEntries(env.DB, mode, season.key);
+
   if (session.last_submit_id && session.last_mode === mode) {
-    const lastEntry = await env.DB.prepare(
-      "SELECT submit_id, mode, user_id, name, score, created_at FROM leaderboard_entries WHERE submit_id = ?"
-    ).bind(session.last_submit_id).first();
+    const lastEntry = await getEntryBySubmitId(env.DB, session.last_submit_id);
 
-    if (lastEntry) {
-      const rank = await getRankForEntry(env.DB, lastEntry);
-      const totalRow = await env.DB.prepare(
-        "SELECT COUNT(*) AS count FROM leaderboard_entries WHERE mode = ?"
-      ).bind(mode).first();
-
+    if (lastEntry && lastEntry.season_key === season.key) {
       return json({
         ok: true,
         mode,
-        rank,
+        season_key: season.key,
+        rank: await getRankForEntry(env.DB, lastEntry),
         score: Number(lastEntry.score || 0),
-        total: Number(totalRow?.count || 0)
+        total
       });
     }
   }
 
-  const best = await getBestEntryForUser(env.DB, String(session.user_id), mode);
-  const totalRow = await env.DB.prepare(
-    "SELECT COUNT(*) AS count FROM leaderboard_entries WHERE mode = ?"
-  ).bind(mode).first();
-
+  const best = await getBestEntryForUser(env.DB, String(session.user_id), mode, season.key);
   if (!best) {
     return json({
       ok: true,
       mode,
+      season_key: season.key,
       rank: null,
       score: null,
-      total: Number(totalRow?.count || 0)
+      total
     });
   }
 
   return json({
     ok: true,
     mode,
+    season_key: season.key,
     rank: await getRankForEntry(env.DB, best),
     score: Number(best.score || 0),
-    total: Number(totalRow?.count || 0)
+    total
+  });
+}
+
+async function handleLeaderboardGet(request, env) {
+  const url = new URL(request.url);
+  const mode = normMode(url.searchParams.get("mode"));
+  const season = getSeasonInfo();
+  const entries = await getTopEntries(env.DB, mode, season.key, TOP_LIMIT);
+
+  return json({
+    ok: true,
+    mode,
+    season_key: season.key,
+    season_started_at: season.startMs,
+    season_ends_at: season.endMs,
+    total: await countSeasonEntries(env.DB, mode, season.key),
+    minimum_score_to_qualify: getMinimumScoreToQualify(entries),
+    entries: serializeLeaderboard(entries)
   });
 }
 
@@ -366,10 +456,58 @@ function normMode(value) {
   return String(value || "").trim().toLowerCase() === "hard" ? "hard" : "casual";
 }
 
+function getSeasonInfo(now = Date.now()) {
+  const seasonIndex = Math.floor(now / SEASON_MS);
+  const startMs = seasonIndex * SEASON_MS;
+  return {
+    key: `s${seasonIndex}`,
+    startMs,
+    endMs: startMs + SEASON_MS
+  };
+}
+
 function displayNameFromSession(session) {
   if (session.username) return `@${session.username}`;
   const name = `${session.first_name || ""} ${session.last_name || ""}`.trim();
   return name || "Player";
+}
+
+function normalizeGuestName(name) {
+  const value = String(name || "").replace(/\s+/g, " ").trim();
+  if (value.length < 2) {
+    return { ok: false, message: "Name must be at least 2 characters." };
+  }
+  if (value.length > GUEST_NAME_MAX_LENGTH) {
+    return { ok: false, message: `Name must be ${GUEST_NAME_MAX_LENGTH} characters or less.` };
+  }
+  if (/[\u0000-\u001f\u007f<>]/.test(value)) {
+    return { ok: false, message: "Name contains invalid characters." };
+  }
+  return { ok: true, value };
+}
+
+function scoreQualifiesForTop(entries, score) {
+  if (entries.length < TOP_LIMIT) return true;
+  const lastEntry = entries[entries.length - 1];
+  return score >= Number(lastEntry.score || 0);
+}
+
+function getMinimumScoreToQualify(entries) {
+  if (entries.length < TOP_LIMIT) return null;
+  return Number(entries[entries.length - 1].score || 0);
+}
+
+function makeLeaderboardEntry({ submitId, mode, seasonKey, playerSource, userId, name, score, createdAt }) {
+  return {
+    submit_id: submitId,
+    mode,
+    season_key: seasonKey,
+    player_source: playerSource,
+    user_id: userId,
+    name,
+    score,
+    created_at: createdAt
+  };
 }
 
 function randomId(length) {
@@ -380,22 +518,61 @@ async function loadSession(db, sessionId) {
   return db.prepare("SELECT * FROM sessions WHERE session_id = ?").bind(sessionId).first();
 }
 
-async function getTopLines(db, mode, limit) {
+async function getEntryBySubmitId(db, submitId) {
+  return db.prepare(
+    "SELECT submit_id, mode, season_key, player_source, user_id, name, score, created_at FROM leaderboard_entries WHERE submit_id = ?"
+  ).bind(submitId).first();
+}
+
+async function insertLeaderboardEntry(db, entry) {
+  return db.prepare(
+    `INSERT INTO leaderboard_entries (
+      submit_id, mode, season_key, player_source, user_id, name, score, created_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+  ).bind(
+    entry.submit_id,
+    entry.mode,
+    entry.season_key,
+    entry.player_source,
+    entry.user_id,
+    entry.name,
+    entry.score,
+    entry.created_at
+  ).run();
+}
+
+async function deleteLeaderboardEntry(db, submitId) {
+  return db.prepare("DELETE FROM leaderboard_entries WHERE submit_id = ?").bind(submitId).run();
+}
+
+async function getTopEntries(db, mode, seasonKey, limit) {
   const result = await db.prepare(
-    "SELECT name, score FROM leaderboard_entries WHERE mode = ? ORDER BY score DESC, created_at DESC LIMIT ?"
-  ).bind(mode, limit).all();
+    `SELECT submit_id, mode, season_key, player_source, user_id, name, score, created_at
+     FROM leaderboard_entries
+     WHERE mode = ? AND season_key = ?
+     ORDER BY score DESC, created_at DESC, submit_id DESC
+     LIMIT ?`
+  ).bind(mode, seasonKey, limit).all();
 
   return result.results || [];
 }
 
-async function getBestEntryForUser(db, userId, mode) {
+async function countSeasonEntries(db, mode, seasonKey) {
+  const row = await db.prepare(
+    "SELECT COUNT(*) AS count FROM leaderboard_entries WHERE mode = ? AND season_key = ?"
+  ).bind(mode, seasonKey).first();
+
+  return Number(row?.count || 0);
+}
+
+async function getBestEntryForUser(db, userId, mode, seasonKey) {
   return db.prepare(
-    `SELECT submit_id, mode, user_id, name, score, created_at
+    `SELECT submit_id, mode, season_key, player_source, user_id, name, score, created_at
      FROM leaderboard_entries
-     WHERE mode = ? AND user_id = ?
-     ORDER BY score DESC, created_at DESC
+     WHERE mode = ? AND season_key = ? AND user_id = ?
+     ORDER BY score DESC, created_at DESC, submit_id DESC
      LIMIT 1`
-  ).bind(mode, userId).first();
+  ).bind(mode, seasonKey, userId).first();
 }
 
 async function getRankForEntry(db, entry) {
@@ -403,6 +580,7 @@ async function getRankForEntry(db, entry) {
     `SELECT COUNT(*) + 1 AS rank
      FROM leaderboard_entries
      WHERE mode = ?
+       AND season_key = ?
        AND (
          score > ?
          OR (score = ? AND created_at > ?)
@@ -410,6 +588,7 @@ async function getRankForEntry(db, entry) {
        )`
   ).bind(
     entry.mode,
+    entry.season_key,
     entry.score,
     entry.score,
     entry.created_at,
@@ -419,6 +598,16 @@ async function getRankForEntry(db, entry) {
   ).first();
 
   return Number(row?.rank || 1);
+}
+
+function serializeLeaderboard(entries) {
+  return entries.map((entry, index) => ({
+    rank: index + 1,
+    name: entry.name,
+    score: Number(entry.score || 0),
+    player_source: entry.player_source,
+    created_at: Number(entry.created_at || 0)
+  }));
 }
 
 async function setTelegramGameScore(env, session, score) {
@@ -438,19 +627,26 @@ async function setTelegramGameScore(env, session, score) {
   return telegramApi(env, "setGameScore", payload).catch(() => null);
 }
 
-async function sendRankDirectMessage(env, userId, mode, submitId, rank, score, db) {
-  const top = await db.prepare(
-    "SELECT submit_id, name, score FROM leaderboard_entries WHERE mode = ? ORDER BY score DESC, created_at DESC LIMIT ?"
-  ).bind(mode, TOP_LIMIT).all();
-
+async function sendRankDirectMessage(env, userId, mode, seasonKey, submitId, rank, score, db) {
+  const top = await getTopEntries(db, mode, seasonKey, TOP_LIMIT);
   const title = mode === "hard" ? "🔥 Global Top 10 — Hard" : "🙂 Global Top 10 — Casual";
-  const body = (top.results || []).map((entry, index) => {
+  const body = top.map((entry, index) => {
     const suffix = entry.submit_id === submitId ? " ← you" : "";
     return `${index + 1}. ${entry.name} — ${entry.score}${suffix}`;
   }).join("\n");
 
-  const text = `${title}\n\n${body || "No scores yet."}\n\nYour rank: ${rank ? `#${rank}` : "not ranked"}\nScore: ${score}`;
+  const text =
+    `${title}\n\n${body || "No scores yet this season."}\n\n` +
+    `Your rank: ${rank ? `#${rank}` : "not ranked"}\n` +
+    `Score: ${score}`;
+
   return telegramApi(env, "sendMessage", { chat_id: userId, text }).catch(() => null);
+}
+
+async function runMaintenance(db) {
+  const cutoff = Date.now() - LEADERBOARD_RETENTION_MS;
+  await db.prepare("DELETE FROM leaderboard_entries WHERE created_at < ?").bind(cutoff).run();
+  await db.prepare("DELETE FROM sessions WHERE expires_at < ?").bind(Date.now()).run();
 }
 
 async function telegramApi(env, method, payload) {

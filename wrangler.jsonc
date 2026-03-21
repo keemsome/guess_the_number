@@ -10,6 +10,11 @@
     "directory": "./public",
     "binding": "ASSETS"
   },
+  "triggers": {
+    "crons": [
+      "0 3 * * *"
+    ]
+  },
   "vars": {
     "GAME_SHORT_NAME": "guessdanumber_bot",
     "PUBLIC_BASE_URL": "https://guess-the-number.guessdanumber-openclaw.workers.dev"

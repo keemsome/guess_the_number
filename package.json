@@ -6,7 +6,9 @@
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
     "db:apply:local": "wrangler d1 execute DB --local --file=schema.sql",
-    "db:apply:remote": "wrangler d1 execute DB --remote --file=schema.sql"
+    "db:apply:remote": "wrangler d1 execute DB --remote --file=schema.sql",
+    "db:migrate:seasonal:local": "wrangler d1 execute DB --local --file=migrations/20260321_seasonal_leaderboard.sql",
+    "db:migrate:seasonal:remote": "wrangler d1 execute DB --remote --file=migrations/20260321_seasonal_leaderboard.sql"
   },
   "devDependencies": {
     "wrangler": "^4.45.0"

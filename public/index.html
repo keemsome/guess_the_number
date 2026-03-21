@@ -18,7 +18,9 @@
       --shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
       --radius: 18px;
     }
+
     * { box-sizing: border-box; }
+
     body {
       margin: 0;
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
@@ -31,7 +33,9 @@
       justify-content: center;
       padding: 18px;
     }
+
     .wrap { width: min(980px, 100%); }
+
     header {
       display: flex;
       flex-wrap: wrap;
@@ -40,8 +44,16 @@
       justify-content: space-between;
       margin: 6px 6px 14px;
     }
+
     h1 { margin: 0; font-size: 24px; letter-spacing: 0.3px; }
+    h2, h3 { margin: 0; }
     .sub { margin: 0; color: var(--muted); font-size: 13px; }
+
+    .stack {
+      display: grid;
+      gap: 14px;
+    }
+
     .card {
       background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.03));
       border: 1px solid var(--border);
@@ -49,25 +61,37 @@
       box-shadow: var(--shadow);
       overflow: hidden;
     }
+
     .hd {
       padding: 14px 16px;
       border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
     }
+
     .body { padding: 16px; }
+
     .modeRow,
     .stats,
     .footBtns,
-    .modalActions {
+    .modalActions,
+    .leaderboardMeta {
       display: flex;
       gap: 10px;
       flex-wrap: wrap;
       align-items: center;
     }
+
     .modeBtn,
     .btn,
-    .guessInput {
+    .guessInput,
+    .nameInput {
       border-radius: 14px;
     }
+
     .modeBtn {
       appearance: none;
       border: 1px solid var(--border);
@@ -81,14 +105,18 @@
       gap: 8px;
       transition: 0.15s transform, 0.15s border-color, 0.15s background;
     }
+
     .modeBtn:active,
     .btn:active { transform: scale(0.98); }
+
     .modeBtn[aria-pressed="true"] {
       border-color: rgba(77, 163, 255, 0.55);
       background: rgba(77, 163, 255, 0.12);
     }
+
     .badge,
-    .chip {
+    .chip,
+    .sourceTag {
       font-size: 12px;
       padding: 6px 10px;
       border-radius: 999px;
@@ -97,7 +125,9 @@
       color: var(--muted);
       white-space: nowrap;
     }
+
     .stats { margin-top: 12px; }
+
     .stat {
       flex: 1 1 120px;
       padding: 10px 12px;
@@ -105,15 +135,19 @@
       border-radius: 14px;
       background: rgba(0, 0, 0, 0.16);
     }
+
     .stat .k { font-size: 12px; color: var(--muted); }
     .stat .v { font-size: 18px; font-weight: 750; margin-top: 2px; }
+
     .inputRow {
       display: flex;
       flex-direction: column;
       gap: 10px;
       margin-top: 14px;
     }
-    .guessInput {
+
+    .guessInput,
+    .nameInput {
       width: 100%;
       font-size: 18px;
       padding: 12px 14px;
@@ -122,7 +156,10 @@
       color: var(--text);
       outline: none;
     }
-    .guessInput:focus { border-color: rgba(77, 163, 255, 0.6); }
+
+    .guessInput:focus,
+    .nameInput:focus { border-color: rgba(77, 163, 255, 0.6); }
+
     .btn {
       appearance: none;
       border: none;
@@ -132,25 +169,67 @@
       transition: 0.15s transform, 0.15s filter;
       user-select: none;
     }
+
     .btnPrimary { background: var(--accent); color: #081427; }
     .btnGhost { background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border); color: var(--text); }
     .btnSmall { padding: 10px 12px; font-size: 13px; border-radius: 12px; }
+    .btnMuted { background: rgba(255, 255, 255, 0.12); color: var(--text); border: 1px solid var(--border); }
     #submitBtn { width: 100%; }
+    .iconBtn {
+      width: 42px;
+      height: 42px;
+      padding: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      line-height: 1;
+    }
+    .shareOptions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+    .shareOption {
+      width: 56px;
+      height: 56px;
+      border-radius: 18px;
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .shareOption.facebook { color: #8db8ff; }
+    .shareOption.x { color: #ffffff; }
+    .shareOption.telegram { color: #89d7ff; }
+
     .hint,
-    .apiStatus {
+    .apiStatus,
+    .leaderboardHint,
+    .guestNote {
       margin: 10px 2px 0;
       color: var(--muted);
       font-size: 13px;
     }
+
     .apiStatus[data-state="error"] { color: #ffd2d2; }
     .apiStatus[data-state="success"] { color: #c8ffd8; }
+
     .list {
       margin-top: 14px;
       display: flex;
       flex-direction: column;
       gap: 10px;
     }
-    .row {
+
+    .row,
+    .lbItem {
       border: 1px solid var(--border);
       border-radius: 14px;
       padding: 10px 12px;
@@ -161,24 +240,94 @@
       justify-content: space-between;
       animation: pop 0.18s ease-out;
     }
+
     @keyframes pop {
       from { transform: scale(0.985); opacity: 0; }
       to { transform: scale(1); opacity: 1; }
     }
-    .left { display: flex; flex-direction: column; }
-    .right { display: flex; gap: 10px; align-items: center; }
-    .guessTag { font-weight: 800; letter-spacing: 1px; }
-    .clue { font-size: 13px; color: var(--muted); margin-top: 2px; }
-    .chip.good {
+
+    .left,
+    .lbBody {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .right,
+    .lbLeft {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .guessTag,
+    .lbName { font-weight: 800; letter-spacing: 1px; }
+    .clue,
+    .lbMeta { font-size: 13px; color: var(--muted); margin-top: 2px; }
+
+    .chip.good,
+    .sourceTag.telegram {
       color: rgba(34, 197, 94, 0.95);
       border-color: rgba(34, 197, 94, 0.35);
       background: rgba(34, 197, 94, 0.08);
     }
-    .chip.bad {
-      color: rgba(239, 68, 68, 0.95);
-      border-color: rgba(239, 68, 68, 0.35);
-      background: rgba(239, 68, 68, 0.08);
+
+    .chip.bad,
+    .sourceTag.guest {
+      color: rgba(255, 222, 89, 0.95);
+      border-color: rgba(255, 222, 89, 0.35);
+      background: rgba(255, 222, 89, 0.08);
     }
+
+    .rankBubble {
+      width: 30px;
+      height: 30px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text);
+      font-weight: 800;
+      flex: 0 0 auto;
+    }
+
+    .leaderboardList {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .leaderboardEmpty {
+      border: 1px dashed var(--border);
+      border-radius: 14px;
+      padding: 14px;
+      color: var(--muted);
+      background: rgba(0, 0, 0, 0.14);
+    }
+
+    .seasonPill {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .guestForm {
+      display: none;
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid var(--border);
+    }
+
+    .guestForm[data-visible="true"] { display: block; }
+
+    .nameRow {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
     .modalBackdrop {
       position: fixed;
       inset: 0;
@@ -189,18 +338,22 @@
       padding: 18px;
       z-index: 20;
     }
+
     .modalBackdrop[aria-hidden="false"] { display: flex; }
+
     .modal {
-      width: min(520px, 100%);
+      width: min(560px, 100%);
       background: linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.04));
       border: 1px solid var(--border);
       border-radius: 20px;
       box-shadow: var(--shadow);
       padding: 16px;
     }
+
     .modal h2 { margin: 0 0 8px; }
     .modal p { margin: 8px 0; color: var(--muted); }
     .modalActions { justify-content: flex-end; margin-top: 12px; }
+
     @media (max-width: 420px) {
       .modalActions { flex-direction: column; }
       .modalActions .btn { width: 100%; }
@@ -216,32 +369,52 @@
       </div>
       <div class="footBtns">
         <button id="newGameBtn" class="btn btnGhost btnSmall">New game</button>
-        <button id="shareBtnTop" class="btn btnGhost btnSmall" title="Share score in Telegram" disabled>Share</button>
+        <button id="shareBtnTop" class="btn btnGhost btnSmall iconBtn" title="Share" aria-label="Share">
+          <span aria-hidden="true">↗</span>
+        </button>
       </div>
     </header>
-    <section class="card">
-      <div class="hd">
-        <div class="modeRow" aria-label="Mode selector">
-          <button id="modeCasual" class="modeBtn" aria-pressed="true">🙂 Casual <span class="badge">3 digits · 30 tries</span></button>
-          <button id="modeHard" class="modeBtn" aria-pressed="false">🔥 Hard <span class="badge">4 digits · 20 tries</span></button>
+
+    <div class="stack">
+      <section class="card">
+        <div class="hd">
+          <div class="modeRow" aria-label="Mode selector">
+            <button id="modeCasual" class="modeBtn" aria-pressed="true">🙂 Casual <span class="badge">3 digits · 30 tries</span></button>
+            <button id="modeHard" class="modeBtn" aria-pressed="false">🔥 Hard <span class="badge">4 digits · 20 tries</span></button>
+          </div>
         </div>
-      </div>
-      <div class="body">
-        <div class="stats">
-          <div class="stat"><div class="k">Guesses</div><div class="v"><span id="guessCount">0</span> / <span id="guessMax">30</span></div></div>
-          <div class="stat"><div class="k">Time</div><div class="v" id="timer">0:00</div></div>
-          <div class="stat"><div class="k">Status</div><div class="v" id="status" aria-live="polite">Playing</div></div>
+        <div class="body">
+          <div class="stats">
+            <div class="stat"><div class="k">Guesses</div><div class="v"><span id="guessCount">0</span> / <span id="guessMax">30</span></div></div>
+            <div class="stat"><div class="k">Time</div><div class="v" id="timer">0:00</div></div>
+            <div class="stat"><div class="k">Status</div><div class="v" id="status" aria-live="polite">Playing</div></div>
+          </div>
+          <div class="inputRow">
+            <input id="guessInput" class="guessInput" inputmode="numeric" autocomplete="off" placeholder="Enter digits" />
+            <button id="submitBtn" class="btn btnPrimary">Guess</button>
+          </div>
+          <div class="hint" id="hint">Enter 3 different digits (0-9). No repeats.</div>
+          <div class="hint">🏆 The page now shows the live Top 10 for the selected mode.</div>
+          <div class="apiStatus" id="apiStatus" aria-live="polite"></div>
+          <div class="list" id="guesses"></div>
         </div>
-        <div class="inputRow">
-          <input id="guessInput" class="guessInput" inputmode="numeric" autocomplete="off" placeholder="Enter digits" />
-          <button id="submitBtn" class="btn btnPrimary">Guess</button>
+      </section>
+
+      <section class="card">
+        <div class="hd">
+          <div>
+            <h2 id="leaderboardTitle">🙂 Casual Top 10</h2>
+            <div class="leaderboardHint" id="leaderboardSeason">Season loading…</div>
+          </div>
+          <div class="leaderboardMeta">
+            <span class="seasonPill" id="leaderboardCutoff">Top 10 loading…</span>
+          </div>
         </div>
-        <div class="hint" id="hint">Enter 3 different digits (0-9). No repeats.</div>
-        <div class="hint">🏆 Global leaderboard: type <b>/globaltop</b> or <b>/globaltop hard</b> in the bot.</div>
-        <div class="apiStatus" id="apiStatus" aria-live="polite"></div>
-        <div class="list" id="guesses"></div>
-      </div>
-    </section>
+        <div class="body">
+          <div class="leaderboardList" id="leaderboardList"></div>
+        </div>
+      </section>
+    </div>
   </div>
 
   <div class="modalBackdrop" id="winBackdrop" aria-hidden="true">
@@ -250,8 +423,21 @@
       <p>You solved it in <b><span id="finalGuesses">0</span></b> guesses. Time: <b><span id="finalTime">0:00</span></b></p>
       <p>Score: <b><span id="finalScore">0</span></b></p>
       <p>Global Rank: <b><span id="globalRank">-</span></b></p>
+
+      <div class="guestForm" id="guestForm" data-visible="false">
+        <h3>Save this score to the Top 10</h3>
+        <p class="guestNote">This run is high enough for the current Top 10. Enter a name to save it.</p>
+        <div class="nameRow">
+          <input id="guestNameInput" class="nameInput" maxlength="20" autocomplete="nickname" placeholder="Enter your name" />
+          <button id="guestSaveBtn" class="btn btnPrimary">Save To Top 10</button>
+        </div>
+        <div class="guestNote" id="guestSaveStatus" aria-live="polite"></div>
+      </div>
+
       <div class="modalActions">
-        <button id="shareBtn" class="btn btnGhost">Share score</button>
+        <button id="shareBtn" class="btn btnGhost iconBtn" title="Share" aria-label="Share">
+          <span aria-hidden="true">↗</span>
+        </button>
         <button id="closeWin" class="btn btnPrimary">New game</button>
       </div>
     </div>
@@ -267,12 +453,29 @@
     </div>
   </div>
 
+  <div class="modalBackdrop" id="shareBackdrop" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="shareTitle">
+      <h2 id="shareTitle">Share</h2>
+      <p>Share this game or your latest score.</p>
+      <div class="shareOptions">
+        <button id="shareFacebookBtn" class="shareOption facebook" aria-label="Share to Facebook" title="Facebook">f</button>
+        <button id="shareXBtn" class="shareOption x" aria-label="Share to X" title="X">X</button>
+        <button id="shareTelegramBtn" class="shareOption telegram" aria-label="Share to Telegram" title="Telegram">Tg</button>
+      </div>
+      <div class="modalActions">
+        <button id="closeShare" class="btn btnPrimary">Close</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     const SCORE_ENDPOINT = "/api/score_submit";
+    const GUEST_SCORE_ENDPOINT = "/api/guest_score_submit";
     const RANK_ENDPOINT = "/api/rank_get";
+    const LEADERBOARD_ENDPOINT = "/api/leaderboard";
     const MODES = {
-      casual: { id: "casual", digits: 3, maxGuesses: 30 },
-      hard: { id: "hard", digits: 4, maxGuesses: 20 }
+      casual: { id: "casual", digits: 3, maxGuesses: 30, title: "🙂 Casual Top 10" },
+      hard: { id: "hard", digits: 4, maxGuesses: 20, title: "🔥 Hard Top 10" }
     };
 
     const els = {
@@ -288,8 +491,13 @@
       submitBtn: document.getElementById("submitBtn"),
       newGameBtn: document.getElementById("newGameBtn"),
       guesses: document.getElementById("guesses"),
+      leaderboardTitle: document.getElementById("leaderboardTitle"),
+      leaderboardSeason: document.getElementById("leaderboardSeason"),
+      leaderboardCutoff: document.getElementById("leaderboardCutoff"),
+      leaderboardList: document.getElementById("leaderboardList"),
       winBackdrop: document.getElementById("winBackdrop"),
       loseBackdrop: document.getElementById("loseBackdrop"),
+      shareBackdrop: document.getElementById("shareBackdrop"),
       finalGuesses: document.getElementById("finalGuesses"),
       finalTime: document.getElementById("finalTime"),
       finalScore: document.getElementById("finalScore"),
@@ -298,7 +506,15 @@
       closeLose: document.getElementById("closeLose"),
       reveal: document.getElementById("reveal"),
       shareBtn: document.getElementById("shareBtn"),
-      shareBtnTop: document.getElementById("shareBtnTop")
+      shareBtnTop: document.getElementById("shareBtnTop"),
+      shareFacebookBtn: document.getElementById("shareFacebookBtn"),
+      shareXBtn: document.getElementById("shareXBtn"),
+      shareTelegramBtn: document.getElementById("shareTelegramBtn"),
+      closeShare: document.getElementById("closeShare"),
+      guestForm: document.getElementById("guestForm"),
+      guestNameInput: document.getElementById("guestNameInput"),
+      guestSaveBtn: document.getElementById("guestSaveBtn"),
+      guestSaveStatus: document.getElementById("guestSaveStatus")
     };
 
     let mode = MODES.casual;
@@ -307,6 +523,9 @@
     let timerHandle = null;
     let gameOver = false;
     let roundStartMs = null;
+    let leaderboardState = null;
+    let pendingGuestSubmission = null;
+    let lastCompletedScore = null;
 
     function isTelegramGameContext() {
       return typeof TelegramGameProxy !== "undefined" && TelegramGameProxy;
@@ -317,9 +536,19 @@
       return { sessionId: qs.get("s"), token: qs.get("t") };
     }
 
+    function hasTelegramLaunchSession() {
+      const sess = getTelegramSession();
+      return Boolean(sess.sessionId && sess.token);
+    }
+
     function setApiStatus(message, state) {
       els.apiStatus.textContent = message || "";
       els.apiStatus.dataset.state = state || "";
+    }
+
+    function setGuestSaveStatus(message, state) {
+      els.guestSaveStatus.textContent = message || "";
+      els.guestSaveStatus.dataset.state = state || "";
     }
 
     function computeTelegramScore(modeId, guessesUsed, elapsedMs) {
@@ -344,6 +573,23 @@
       return response.json().catch(() => ({ ok: false, error: "bad_response" }));
     }
 
+    async function submitGuestScore(name) {
+      if (!pendingGuestSubmission) return { ok: false, error: "missing_score" };
+
+      const response = await fetch(GUEST_SCORE_ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          mode: mode.id,
+          score: pendingGuestSubmission.score,
+          name
+        })
+      }).catch(() => null);
+
+      if (!response) return { ok: false, error: "network_error" };
+      return response.json().catch(() => ({ ok: false, error: "bad_response" }));
+    }
+
     async function fetchGlobalRank() {
       const sess = getTelegramSession();
       if (!sess.sessionId || !sess.token) return null;
@@ -361,6 +607,109 @@
       }
     }
 
+    async function refreshLeaderboard() {
+      const url = new URL(LEADERBOARD_ENDPOINT, window.location.origin);
+      url.searchParams.set("mode", mode.id);
+
+      try {
+        const response = await fetch(url);
+        leaderboardState = await response.json();
+      } catch {
+        leaderboardState = null;
+      }
+
+      renderLeaderboard();
+    }
+
+    function renderLeaderboard() {
+      els.leaderboardTitle.textContent = mode.title;
+      els.leaderboardList.innerHTML = "";
+
+      if (!leaderboardState || !leaderboardState.ok) {
+        els.leaderboardSeason.textContent = "Leaderboard unavailable right now.";
+        els.leaderboardCutoff.textContent = "Unable to load Top 10.";
+        const empty = document.createElement("div");
+        empty.className = "leaderboardEmpty";
+        empty.textContent = "The leaderboard could not be loaded. Try again in a moment.";
+        els.leaderboardList.appendChild(empty);
+        return;
+      }
+
+      els.leaderboardSeason.textContent = `Current season ends ${formatSeasonDate(leaderboardState.season_ends_at)}. Resets every 2 weeks.`;
+      const cutoff = leaderboardState.minimum_score_to_qualify;
+      els.leaderboardCutoff.textContent = cutoff == null
+        ? "Open board: any winning score can enter right now."
+        : `Current Top 10 cutoff: ${cutoff}`;
+
+      if (!leaderboardState.entries.length) {
+        const empty = document.createElement("div");
+        empty.className = "leaderboardEmpty";
+        empty.textContent = "No scores yet this season. Win a round to claim the first spot.";
+        els.leaderboardList.appendChild(empty);
+        return;
+      }
+
+      leaderboardState.entries.forEach((entry) => {
+        const item = document.createElement("div");
+        item.className = "lbItem";
+
+        const left = document.createElement("div");
+        left.className = "lbLeft";
+
+        const rank = document.createElement("div");
+        rank.className = "rankBubble";
+        rank.textContent = String(entry.rank);
+
+        const body = document.createElement("div");
+        body.className = "lbBody";
+
+        const name = document.createElement("div");
+        name.className = "lbName";
+        name.textContent = entry.name;
+
+        const meta = document.createElement("div");
+        meta.className = "lbMeta";
+        meta.textContent = `Score ${entry.score}`;
+
+        body.appendChild(name);
+        body.appendChild(meta);
+        left.appendChild(rank);
+        left.appendChild(body);
+
+        const source = document.createElement("div");
+        source.className = `sourceTag ${entry.player_source}`;
+        source.textContent = entry.player_source === "telegram" ? "Telegram" : "Guest";
+
+        item.appendChild(left);
+        item.appendChild(source);
+        els.leaderboardList.appendChild(item);
+      });
+    }
+
+    function guestWouldQualify(score) {
+      if (!leaderboardState || !leaderboardState.ok) return false;
+      if (leaderboardState.entries.length < 10) return true;
+      return score >= Number(leaderboardState.minimum_score_to_qualify || 0);
+    }
+
+    function showGuestForm(score) {
+      pendingGuestSubmission = { score };
+      els.guestForm.dataset.visible = "true";
+      els.guestNameInput.value = "";
+      els.guestSaveBtn.disabled = false;
+      setGuestSaveStatus("", "");
+      els.globalRank.textContent = "Enter your name";
+      els.guestNameInput.focus({ preventScroll: true });
+    }
+
+    function hideGuestForm() {
+      pendingGuestSubmission = null;
+      els.guestForm.dataset.visible = "false";
+      els.guestNameInput.value = "";
+      setGuestSaveStatus("", "");
+      els.guestSaveBtn.disabled = false;
+    }
+
     function randDigits(count) {
       const digits = Array.from({ length: 10 }, (_, index) => String(index));
       for (let i = digits.length - 1; i > 0; i--) {
@@ -375,6 +724,51 @@
       const minutes = Math.floor(totalSeconds / 60);
       const seconds = String(totalSeconds % 60).padStart(2, "0");
       return `${minutes}:${seconds}`;
+    }
+
+    function formatSeasonDate(timestamp) {
+      if (!timestamp) return "soon";
+      return new Date(timestamp).toLocaleDateString(undefined, {
+        month: "short",
+        day: "numeric"
+      });
+    }
+
+    function getShareUrl() {
+      return `${window.location.origin}/`;
+    }
+
+    function getShareText() {
+      if (lastCompletedScore != null) {
+        return `I just scored ${lastCompletedScore} in Guess The Number.`;
+      }
+      return "Try Guess The Number and see if you can crack the code.";
+    }
+
+    function openShareModal() {
+      openModal(els.shareBackdrop);
+    }
+
+    function closeShareModal() {
+      closeModal(els.shareBackdrop);
+    }
+
+    function openShareTarget(target) {
+      const url = encodeURIComponent(getShareUrl());
+      const text = encodeURIComponent(getShareText());
+      let shareUrl = "";
+
+      if (target === "facebook") {
+        shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${url}`;
+      } else if (target === "x") {
+        shareUrl = `https://x.com/intent/tweet?url=${url}&text=${text}`;
+      } else if (target === "telegram") {
+        shareUrl = `https://t.me/share/url?url=${url}&text=${text}`;
+      }
+
+      if (shareUrl) {
+        window.open(shareUrl, "_blank", "noopener,noreferrer");
+      }
     }
 
     function resetTimer() {
@@ -411,6 +805,7 @@
       els.guessInput.maxLength = mode.digits;
       els.guessInput.placeholder = mode.digits === 3 ? "e.g. 507" : "e.g. 5072";
       newGame();
+      void refreshLeaderboard();
     }
 
     function openModal(backdrop) {
@@ -496,31 +891,21 @@
       els.guessInput.value = "";
       els.reveal.textContent = secret;
       els.globalRank.textContent = "-";
+      hideGuestForm();
       setApiStatus("", "");
       resetTimer();
       updateStats();
 
-      const canShare = isTelegramGameContext();
-      els.shareBtn.disabled = !canShare;
-      els.shareBtnTop.disabled = !canShare;
-
       els.guessInput.focus({ preventScroll: true });
     }
 
-    async function finalizeWin() {
-      const elapsed = roundStartMs ? Date.now() - roundStartMs : 0;
-      const telegramScore = computeTelegramScore(mode.id, guessCount, elapsed);
-
-      els.finalGuesses.textContent = String(guessCount);
-      els.finalTime.textContent = formatTime(elapsed);
-      els.finalScore.textContent = String(telegramScore);
+    async function handleTelegramWin(score) {
       els.globalRank.textContent = "...";
-      openModal(els.winBackdrop);
-
-      const submitResult = await submitTelegramScore(telegramScore);
+      const submitResult = await submitTelegramScore(score);
       if (!submitResult || !submitResult.ok) {
         els.globalRank.textContent = "-";
         setApiStatus("Score saved locally, but the global leaderboard request failed.", "error");
+        await refreshLeaderboard();
         return;
       }
 
@@ -537,6 +922,44 @@
         els.globalRank.textContent = "-";
         setApiStatus("Score submitted, but rank is not available yet.", "error");
       }
+
+      await refreshLeaderboard();
+    }
+
+    async function handleGuestWin(score) {
+      if (!leaderboardState || !leaderboardState.ok) {
+        await refreshLeaderboard();
+      }
+
+      if (guestWouldQualify(score)) {
+        showGuestForm(score);
+        setApiStatus("This score can enter the current Top 10 if you save a name.", "success");
+        return;
+      }
+
+      els.globalRank.textContent = "Outside Top 10";
+      setApiStatus("Nice win. This score is not high enough for the current Top 10.", "");
+      await refreshLeaderboard();
+    }
+
+    async function finalizeWin() {
+      const elapsed = roundStartMs ? Date.now() - roundStartMs : 0;
+      const score = computeTelegramScore(mode.id, guessCount, elapsed);
+      lastCompletedScore = score;
+
+      els.finalGuesses.textContent = String(guessCount);
+      els.finalTime.textContent = formatTime(elapsed);
+      els.finalScore.textContent = String(score);
+      els.globalRank.textContent = "-";
+      hideGuestForm();
+      openModal(els.winBackdrop);
+
+      if (hasTelegramLaunchSession()) {
+        await handleTelegramWin(score);
+        return;
+      }
+
+      await handleGuestWin(score);
     }
 
     function handleGuess() {
@@ -574,25 +997,66 @@
       updateStats();
     }
 
-    function shareScore() {
-      try {
-        if (isTelegramGameContext()) TelegramGameProxy.shareScore();
-      } catch {}
+    async function handleGuestSave() {
+      const name = els.guestNameInput.value.trim();
+      if (!pendingGuestSubmission) return;
+
+      if (name.length < 2) {
+        setGuestSaveStatus("Enter at least 2 characters.", "error");
+        return;
+      }
+
+      els.guestSaveBtn.disabled = true;
+      setGuestSaveStatus("Saving score…", "");
+
+      const result = await submitGuestScore(name);
+      if (result && result.ok) {
+        els.globalRank.textContent = `#${result.rank}`;
+        setGuestSaveStatus("Saved to the current Top 10.", "success");
+        setApiStatus("Your guest score is now on the leaderboard.", "success");
+        hideGuestForm();
+        await refreshLeaderboard();
+        return;
+      }
+
+      els.guestSaveBtn.disabled = false;
+      if (result && result.error === "not_qualified") {
+        els.globalRank.textContent = "Outside Top 10";
+        setGuestSaveStatus("The leaderboard changed and this score no longer qualifies.", "error");
+        setApiStatus("This score missed the current Top 10 after re-check.", "error");
+      } else {
+        setGuestSaveStatus(result && result.message ? result.message : "Could not save your score.", "error");
+      }
+
+      await refreshLeaderboard();
     }
 
     els.modeCasual.addEventListener("click", () => setMode(MODES.casual));
     els.modeHard.addEventListener("click", () => setMode(MODES.hard));
     els.newGameBtn.addEventListener("click", newGame);
     els.submitBtn.addEventListener("click", handleGuess);
-    els.shareBtn.addEventListener("click", shareScore);
-    els.shareBtnTop.addEventListener("click", shareScore);
+    els.shareBtn.addEventListener("click", openShareModal);
+    els.shareBtnTop.addEventListener("click", openShareModal);
+    els.shareFacebookBtn.addEventListener("click", () => openShareTarget("facebook"));
+    els.shareXBtn.addEventListener("click", () => openShareTarget("x"));
+    els.shareTelegramBtn.addEventListener("click", () => openShareTarget("telegram"));
+    els.closeShare.addEventListener("click", closeShareModal);
+    els.guestSaveBtn.addEventListener("click", () => void handleGuestSave());
 
     els.guessInput.addEventListener("input", () => {
       els.guessInput.value = els.guessInput.value.replace(/\D/g, "").slice(0, mode.digits);
     });
 
+    els.guestNameInput.addEventListener("input", () => {
+      els.guestNameInput.value = els.guestNameInput.value.replace(/\s+/g, " ").slice(0, 20);
+    });
+
     els.guessInput.addEventListener("keydown", (event) => {
       if (event.key === "Enter") handleGuess();
+    });
+
+    els.guestNameInput.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") void handleGuestSave();
     });
 
     els.closeWin.addEventListener("click", () => {
@@ -603,6 +1067,10 @@
     els.closeLose.addEventListener("click", () => {
       closeModal(els.loseBackdrop);
       newGame();
+    });
+
+    els.shareBackdrop.addEventListener("click", (event) => {
+      if (event.target === els.shareBackdrop) closeShareModal();
     });
 
     els.winBackdrop.addEventListener("click", (event) => {
