@@ -199,6 +199,13 @@
       font-weight: 800;
       cursor: pointer;
     }
+    .shareOption.copiedState {
+      width: auto;
+      min-width: 42px;
+      padding: 0 12px;
+      font-size: 12px;
+      letter-spacing: 0.2px;
+    }
     .shareOption.facebook { color: #8db8ff; }
     .shareOption.x { color: #ffffff; }
     .shareOption.telegram { color: #89d7ff; }
@@ -363,6 +370,7 @@
       </div>
       <div class="footBtns">
         <button id="newGameBtn" class="btn btnGhost btnSmall">New game</button>
+        <button id="copyLinkBtn" class="shareOption" aria-label="Copy game link" title="Copy game link">⧉</button>
         <button id="shareFacebookBtn" class="shareOption facebook" aria-label="Share to Facebook" title="Share to Facebook">f</button>
         <button id="shareXBtn" class="shareOption x" aria-label="Share to X" title="Share to X">X</button>
         <button id="shareTelegramBtn" class="shareOption telegram" aria-label="Share to Telegram" title="Share to Telegram">Tg</button>
@@ -483,6 +491,7 @@
       shareFacebookBtn: document.getElementById("shareFacebookBtn"),
       shareXBtn: document.getElementById("shareXBtn"),
       shareTelegramBtn: document.getElementById("shareTelegramBtn"),
+      copyLinkBtn: document.getElementById("copyLinkBtn"),
       guestForm: document.getElementById("guestForm"),
       guestNameInput: document.getElementById("guestNameInput"),
       guestSaveBtn: document.getElementById("guestSaveBtn"),
@@ -751,6 +760,30 @@
       }
     }
 
+    async function copyShareLink() {
+      const originalLabel = els.copyLinkBtn.textContent;
+      const originalTitle = els.copyLinkBtn.title;
+
+      try {
+        await navigator.clipboard.writeText(getShareUrl());
+        els.copyLinkBtn.textContent = "Game URL copied";
+        els.copyLinkBtn.title = "Link copied";
+        els.copyLinkBtn.classList.add("copiedState");
+        setApiStatus("Game link copied to clipboard.", "success");
+      } catch {
+        els.copyLinkBtn.textContent = "Copy";
+        els.copyLinkBtn.title = "Copy failed";
+        els.copyLinkBtn.classList.add("copiedState");
+        setApiStatus("Could not copy the link on this device.", "error");
+      }
+
+      window.setTimeout(() => {
+        els.copyLinkBtn.textContent = originalLabel;
+        els.copyLinkBtn.title = originalTitle;
+        els.copyLinkBtn.classList.remove("copiedState");
+      }, 1400);
+    }
+
     function resetTimer() {
       if (timerHandle) clearInterval(timerHandle);
       timerHandle = null;
@@ -1014,6 +1047,7 @@
     els.modeCasual.addEventListener("click", () => setMode(MODES.casual));
     els.modeHard.addEventListener("click", () => setMode(MODES.hard));
     els.newGameBtn.addEventListener("click", newGame);
+    els.copyLinkBtn.addEventListener("click", () => void copyShareLink());
     els.submitBtn.addEventListener("click", handleGuess);
     els.shareFacebookBtn.addEventListener("click", () => openShareTarget("facebook"));
     els.shareXBtn.addEventListener("click", () => openShareTarget("x"));
