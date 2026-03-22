@@ -108,7 +108,7 @@ async function handleMessage(message, env) {
     const entries = await getTopEntries(env.DB, mode, season.key, TOP_LIMIT);
     const title = mode === "hard" ? "🔥 Global Top 10 — Hard" : "🙂 Global Top 10 — Casual";
     const textBody = entries.length
-      ? entries.map((entry, index) => `${index + 1}. ${entry.name} — ${entry.score}`).join("\n")
+      ? entries.map((entry, index) => `${index + 1}. ${formatLeaderboardTextEntry(entry)}`).join("\n")
       : "No scores yet this season.";
 
     return telegramApi(env, "sendMessage", {
@@ -206,12 +206,14 @@ async function handleScoreSubmit(request, env) {
   const token = String(body.t || "");
   const mode = normMode(body.mode);
   const score = Number.parseInt(body.score, 10);
+  const roundsUsed = Number.parseInt(body.rounds_used, 10);
+  const timeUsedMs = Number.parseInt(body.time_used_ms, 10);
 
-  if (!sessionId || !token || !Number.isFinite(score)) {
+  if (!sessionId || !token || !Number.isFinite(score) || !Number.isFinite(roundsUsed) || !Number.isFinite(timeUsedMs)) {
     return json({ ok: false, error: "bad_request" }, 400);
   }
 
-  if (score < 0 || score > MAX_SCORE) {
+  if (score < 0 || score > MAX_SCORE || roundsUsed < 1 || timeUsedMs < 0) {
     return json({ ok: false, error: "invalid_score" }, 400);
   }
 
@@ -244,6 +246,8 @@ async function handleScoreSubmit(request, env) {
     userId: String(session.user_id),
     name: displayName,
     score,
+    roundsUsed,
+    timeUsedMs,
     createdAt: now
   });
 
@@ -263,6 +267,8 @@ async function handleScoreSubmit(request, env) {
     mode,
     season_key: season.key,
     score,
+    rounds_used: roundsUsed,
+    time_used_ms: timeUsedMs,
     rank,
     total
   });
@@ -274,9 +280,12 @@ async function handleGuestScoreSubmit(request, env) {
 
   const mode = normMode(body.mode);
   const score = Number.parseInt(body.score, 10);
+  const roundsUsed = Number.parseInt(body.rounds_used, 10);
+  const timeUsedMs = Number.parseInt(body.time_used_ms, 10);
   const normalizedName = normalizeGuestName(body.name);
 
-  if (!Number.isFinite(score) || score < 0 || score > MAX_SCORE) {
+  if (!Number.isFinite(score) || !Number.isFinite(roundsUsed) || !Number.isFinite(timeUsedMs) ||
+      score < 0 || score > MAX_SCORE || roundsUsed < 1 || timeUsedMs < 0) {
     return json({ ok: false, error: "invalid_score" }, 400);
   }
 
@@ -304,6 +313,8 @@ async function handleGuestScoreSubmit(request, env) {
     userId: `guest:${submitId}`,
     name: normalizedName.value,
     score,
+    roundsUsed,
+    timeUsedMs,
     createdAt: now
   });
 
@@ -361,6 +372,8 @@ async function handleRankGet(request, env) {
         season_key: season.key,
         rank: await getRankForEntry(env.DB, lastEntry),
         score: Number(lastEntry.score || 0),
+        rounds_used: Number(lastEntry.rounds_used || 0),
+        time_used_ms: Number(lastEntry.time_used_ms || 0),
         total
       });
     }
@@ -384,6 +397,8 @@ async function handleRankGet(request, env) {
     season_key: season.key,
     rank: await getRankForEntry(env.DB, best),
     score: Number(best.score || 0),
+    rounds_used: Number(best.rounds_used || 0),
+    time_used_ms: Number(best.time_used_ms || 0),
     total
   });
 }
@@ -497,7 +512,7 @@ function getMinimumScoreToQualify(entries) {
   return Number(entries[entries.length - 1].score || 0);
 }
 
-function makeLeaderboardEntry({ submitId, mode, seasonKey, playerSource, userId, name, score, createdAt }) {
+function makeLeaderboardEntry({ submitId, mode, seasonKey, playerSource, userId, name, score, roundsUsed, timeUsedMs, createdAt }) {
   return {
     submit_id: submitId,
     mode,
@@ -506,6 +521,8 @@ function makeLeaderboardEntry({ submitId, mode, seasonKey, playerSource, userId,
     user_id: userId,
     name,
     score,
+    rounds_used: roundsUsed,
+    time_used_ms: timeUsedMs,
     created_at: createdAt
   };
 }
@@ -520,15 +537,15 @@ async function loadSession(db, sessionId) {
 
 async function getEntryBySubmitId(db, submitId) {
   return db.prepare(
-    "SELECT submit_id, mode, season_key, player_source, user_id, name, score, created_at FROM leaderboard_entries WHERE submit_id = ?"
+    "SELECT submit_id, mode, season_key, player_source, user_id, name, score, rounds_used, time_used_ms, created_at FROM leaderboard_entries WHERE submit_id = ?"
   ).bind(submitId).first();
 }
 
 async function insertLeaderboardEntry(db, entry) {
   return db.prepare(
     `INSERT INTO leaderboard_entries (
-      submit_id, mode, season_key, player_source, user_id, name, score, created_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+      submit_id, mode, season_key, player_source, user_id, name, score, rounds_used, time_used_ms, created_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   ).bind(
     entry.submit_id,
     entry.mode,
@@ -537,6 +554,8 @@ async function insertLeaderboardEntry(db, entry) {
     entry.user_id,
     entry.name,
     entry.score,
+    entry.rounds_used,
+    entry.time_used_ms,
     entry.created_at
   ).run();
 }
@@ -547,7 +566,7 @@ async function deleteLeaderboardEntry(db, submitId) {
 
 async function getTopEntries(db, mode, seasonKey, limit) {
   const result = await db.prepare(
-    `SELECT submit_id, mode, season_key, player_source, user_id, name, score, created_at
+    `SELECT submit_id, mode, season_key, player_source, user_id, name, score, rounds_used, time_used_ms, created_at
      FROM leaderboard_entries
      WHERE mode = ? AND season_key = ?
      ORDER BY score DESC, created_at DESC, submit_id DESC
@@ -567,7 +586,7 @@ async function countSeasonEntries(db, mode, seasonKey) {
 
 async function getBestEntryForUser(db, userId, mode, seasonKey) {
   return db.prepare(
-    `SELECT submit_id, mode, season_key, player_source, user_id, name, score, created_at
+    `SELECT submit_id, mode, season_key, player_source, user_id, name, score, rounds_used, time_used_ms, created_at
      FROM leaderboard_entries
      WHERE mode = ? AND season_key = ? AND user_id = ?
      ORDER BY score DESC, created_at DESC, submit_id DESC
@@ -605,9 +624,22 @@ function serializeLeaderboard(entries) {
     rank: index + 1,
     name: entry.name,
     score: Number(entry.score || 0),
+    rounds_used: Number(entry.rounds_used || 0),
+    time_used_ms: Number(entry.time_used_ms || 0),
     player_source: entry.player_source,
     created_at: Number(entry.created_at || 0)
   }));
+}
+
+function formatTimeUsed(ms) {
+  const totalSeconds = Math.max(0, Math.floor(Number(ms || 0) / 1000));
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = String(totalSeconds % 60).padStart(2, "0");
+  return `${minutes}:${seconds}`;
+}
+
+function formatLeaderboardTextEntry(entry) {
+  return `${entry.name} — ${entry.score} pts · ${Number(entry.rounds_used || 0)} rounds · ${formatTimeUsed(entry.time_used_ms)}`;
 }
 
 async function setTelegramGameScore(env, session, score) {
@@ -632,7 +664,7 @@ async function sendRankDirectMessage(env, userId, mode, seasonKey, submitId, ran
   const title = mode === "hard" ? "🔥 Global Top 10 — Hard" : "🙂 Global Top 10 — Casual";
   const body = top.map((entry, index) => {
     const suffix = entry.submit_id === submitId ? " ← you" : "";
-    return `${index + 1}. ${entry.name} — ${entry.score}${suffix}`;
+    return `${index + 1}. ${formatLeaderboardTextEntry(entry)}${suffix}`;
   }).join("\n");
 
   const text =

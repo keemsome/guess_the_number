@@ -24,6 +24,8 @@ CREATE TABLE IF NOT EXISTS leaderboard_entries (
   user_id TEXT NOT NULL,
   name TEXT NOT NULL,
   score INTEGER NOT NULL,
+  rounds_used INTEGER NOT NULL DEFAULT 0,
+  time_used_ms INTEGER NOT NULL DEFAULT 0,
   created_at INTEGER NOT NULL
 );
 

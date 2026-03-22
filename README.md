@@ -7,6 +7,7 @@ A Telegram Game with:
 - guest name submission for non-Telegram winners
 - header share icons for Facebook, X, and Telegram
 - rank shown in the win modal
+- rounds used and time used captured for each leaderboard entry
 - direct-message leaderboard summary after each accepted Telegram score
 - automatic 2-week seasonal reset with 30-day leaderboard retention
 
@@ -37,9 +38,10 @@ The project now runs as a single Cloudflare Workers app:
    `npm run db:apply:local`
 8. If you are upgrading an existing live database, run:
    `npm run db:migrate:seasonal:remote`
-9. Start local dev:
+9. If you are upgrading an existing database for round/time stats, also run the new migration in [`migrations/20260322_rounds_and_time.sql`](./migrations/20260322_rounds_and_time.sql).
+10. Start local dev:
    `npm run dev`
-10. Deploy:
+11. Deploy:
    `npm run deploy`
 
 After deploy:

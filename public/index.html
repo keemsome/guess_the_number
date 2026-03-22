@@ -534,11 +534,19 @@
     async function submitTelegramScore(score) {
       const sess = getTelegramSession();
       if (!sess.sessionId || !sess.token) return { ok: false, error: "missing_session" };
+      const elapsed = roundStartMs ? Date.now() - roundStartMs : 0;
 
       const response = await fetch(SCORE_ENDPOINT, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ s: sess.sessionId, t: sess.token, score, mode: mode.id })
+        body: JSON.stringify({
+          s: sess.sessionId,
+          t: sess.token,
+          score,
+          mode: mode.id,
+          rounds_used: guessCount,
+          time_used_ms: elapsed
+        })
       }).catch(() => null);
 
       if (!response) return { ok: false, error: "network_error" };
@@ -554,6 +562,8 @@
         body: JSON.stringify({
           mode: mode.id,
           score: pendingGuestSubmission.score,
+          rounds_used: pendingGuestSubmission.roundsUsed,
+          time_used_ms: pendingGuestSubmission.timeUsedMs,
           name
         })
       }).catch(() => null);
@@ -641,7 +651,7 @@
 
         const meta = document.createElement("div");
         meta.className = "lbMeta";
-        meta.textContent = `Score ${entry.score}`;
+        meta.textContent = `Score ${entry.score} · ${entry.rounds_used} rounds · ${formatTime(entry.time_used_ms)}`;
 
         body.appendChild(name);
         body.appendChild(meta);
@@ -664,8 +674,8 @@
       return score >= Number(leaderboardState.minimum_score_to_qualify || 0);
     }
 
-    function showGuestForm(score) {
-      pendingGuestSubmission = { score };
+    function showGuestForm(score, roundsUsed, timeUsedMs) {
+      pendingGuestSubmission = { score, roundsUsed, timeUsedMs };
       els.guestForm.dataset.visible = "true";
       els.guestNameInput.value = "";
       els.guestSaveBtn.disabled = false;
@@ -896,13 +906,13 @@
       await refreshLeaderboard();
     }
 
-    async function handleGuestWin(score) {
+    async function handleGuestWin(score, elapsed) {
       if (!leaderboardState || !leaderboardState.ok) {
         await refreshLeaderboard();
       }
 
       if (guestWouldQualify(score)) {
-        showGuestForm(score);
+        showGuestForm(score, guessCount, elapsed);
         setApiStatus("This score can enter the current Top 10 if you save a name.", "success");
         return;
       }
@@ -929,7 +939,7 @@
         return;
       }
 
-      await handleGuestWin(score);
+      await handleGuestWin(score, elapsed);
     }
 
     function handleGuess() {
