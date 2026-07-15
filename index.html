@@ -1,75 +1,601 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="robots" content="noindex,nofollow,noarchive">
-<title>Property Charges — Yearly Breakdown</title>
-<style>
-:root{--bg:#f4f7fb;--card:#fff;--ink:#172033;--muted:#667085;--line:#e4e9f2;--blue:#3157d5;--soft:#eef2ff;--warn:#fff4e5;--danger:#fff0ee;--green:#ecfdf3}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,system-ui,-apple-system,"Segoe UI",Arial,sans-serif;line-height:1.5}.page{width:min(1080px,calc(100% - 24px));margin:24px auto 48px}.hero{padding:28px;border-radius:22px;color:#fff;background:linear-gradient(135deg,#243fb6,#3f64de);box-shadow:0 10px 30px #10182814}.eyebrow{margin:0 0 7px;font-size:.78rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;opacity:.8}h1{margin:0;font-size:clamp(1.8rem,5vw,2.8rem);line-height:1.1}.meta{margin-top:12px;opacity:.85}.heroGrid{display:grid;grid-template-columns:1.2fr .8fr;gap:16px;margin-top:20px}.heroBox{padding:18px;border:1px solid #ffffff2d;border-radius:16px;background:#ffffff1c}.label{font-size:.78rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}.hero .label{color:#ffffffd9}.total{font-size:clamp(2.2rem,7vw,3.6rem);font-weight:900;letter-spacing:-.05em}.section{margin-top:23px}.section h2{margin:0 0 11px;font-size:1.25rem}.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:13px}.card{background:var(--card);border:1px solid var(--line);border-radius:17px;padding:17px;box-shadow:0 4px 14px #10182809}.value{margin-top:4px;font-size:1.65rem;font-weight:900;letter-spacing:-.03em}.small{color:var(--muted);font-size:.88rem}.bar{height:8px;margin-top:11px;border-radius:99px;background:#edf0f5;overflow:hidden}.bar span{display:block;height:100%;background:var(--blue)}.notice{margin-top:13px;padding:15px 17px;border-radius:15px;border:1px solid}.notice strong{display:block}.warning{background:var(--warn);border-color:#fedf89;color:#7a2e0e}.danger{background:var(--danger);border-color:#fecdca;color:#7a271a}.success{background:var(--green);border-color:#abefc6;color:#085d3a}.tableWrap{overflow:auto;border:1px solid var(--line);border-radius:17px;background:#fff}table{width:100%;min-width:850px;border-collapse:collapse}th,td{padding:12px 13px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}th:first-child,td:first-child{text-align:left}th{background:#f8faff;color:#475467;font-size:.76rem;text-transform:uppercase;letter-spacing:.04em}tr.special{background:#fffaf4}tfoot td{font-weight:900;background:#f4f7ff;border-bottom:0}.strong{font-weight:900;color:var(--blue)}.plan{display:grid;grid-template-columns:1fr 1fr;gap:13px}.steps{margin:0;padding:0;list-style:none;counter-reset:s}.steps li{position:relative;padding:13px 10px 13px 50px;border-bottom:1px solid var(--line)}.steps li:last-child{border:0}.steps li:before{counter-increment:s;content:counter(s);position:absolute;left:8px;top:12px;width:29px;height:29px;border-radius:50%;display:grid;place-items:center;background:var(--soft);color:var(--blue);font-weight:900}.steps strong{display:block}.calc{background:#fff;border:1px solid var(--line);border-radius:17px;padding:18px}.inputRow{display:flex;gap:9px;margin-top:11px}.money{display:flex;align-items:center;flex:1;border:1px solid #cfd6e4;border-radius:12px;overflow:hidden}.money span{padding:0 10px;color:var(--muted);font-weight:800}.money input{width:100%;border:0;outline:0;padding:12px 12px 12px 0;font:inherit;font-size:1.05rem}.btn{border:0;border-radius:12px;padding:0 16px;background:var(--blue);color:#fff;font:inherit;font-weight:900;cursor:pointer}.output{margin-top:13px;padding:14px;border-radius:13px;background:var(--soft)}.big{font-size:1.5rem;font-weight:900;color:#2545ba}.milestones{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}.mile{padding:10px;border:1px solid var(--line);border-radius:11px}.mile strong{display:block}.print{margin-top:13px;border:1px solid #ffffff4d;border-radius:11px;padding:9px 13px;background:#ffffff1c;color:#fff;font-weight:800;cursor:pointer}.footer{text-align:center;margin-top:20px;color:var(--muted);font-size:.8rem}@media(max-width:780px){.heroGrid,.cards,.plan{grid-template-columns:1fr}.milestones{grid-template-columns:1fr}.page{width:calc(100% - 16px);margin-top:8px}.hero{padding:21px;border-radius:18px}}@media print{body{background:#fff}.page{width:100%;margin:0}.hero{background:#fff;color:#000;border:2px solid #222;box-shadow:none}.heroBox{background:#fff;border-color:#aaa}.hero .label{color:#555}.print,.calc{display:none}.card,.tableWrap{box-shadow:none}}
-</style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Privacy-safe property outstanding charges summary from 2019 through July 2026." />
+  <meta name="robots" content="noindex,nofollow,noarchive" />
+  <title>Apartment Harmoni — Outstanding Breakdown</title>
+  <style>
+    :root {
+      --bg: #f4f7fb;
+      --card: #ffffff;
+      --ink: #172033;
+      --muted: #667085;
+      --line: #e4e9f2;
+      --primary: #3157d5;
+      --primary-soft: #eef2ff;
+      --warning: #b54708;
+      --warning-soft: #fff4e5;
+      --danger: #b42318;
+      --danger-soft: #fff0ee;
+      --success: #067647;
+      --success-soft: #ecfdf3;
+      --shadow: 0 10px 30px rgba(16, 24, 40, 0.08);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+        "Segoe UI", Arial, sans-serif;
+      color: var(--ink);
+      background: var(--bg);
+      line-height: 1.55;
+    }
+
+    .page {
+      width: min(1120px, calc(100% - 28px));
+      margin: 28px auto 48px;
+    }
+
+    .hero {
+      background: linear-gradient(135deg, #243fb6 0%, #3f64de 100%);
+      color: white;
+      padding: 30px;
+      border-radius: 22px;
+      box-shadow: var(--shadow);
+    }
+
+    .eyebrow {
+      margin: 0 0 8px;
+      font-size: 0.78rem;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      opacity: 0.8;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.75rem, 4vw, 2.75rem);
+      line-height: 1.15;
+    }
+
+    .hero-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px 18px;
+      margin-top: 14px;
+      color: rgba(255,255,255,0.85);
+      font-size: 0.95rem;
+    }
+
+    .total-panel {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 18px;
+      margin-top: 22px;
+    }
+
+    .total-box, .statement-note {
+      border-radius: 16px;
+      padding: 19px;
+      background: rgba(255,255,255,0.13);
+      border: 1px solid rgba(255,255,255,0.17);
+    }
+
+    .total-label {
+      font-size: 0.85rem;
+      opacity: 0.85;
+    }
+
+    .total-value {
+      font-size: clamp(2rem, 6vw, 3.5rem);
+      font-weight: 850;
+      letter-spacing: -0.04em;
+      margin-top: 2px;
+    }
+
+    .statement-note strong { display: block; margin-bottom: 4px; }
+
+    .section { margin-top: 24px; }
+
+    .section-title {
+      margin: 0 0 12px;
+      font-size: 1.25rem;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 18px;
+      box-shadow: 0 4px 14px rgba(16, 24, 40, 0.035);
+    }
+
+    .card-label {
+      color: var(--muted);
+      font-size: 0.82rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .card-value {
+      margin-top: 5px;
+      font-size: 1.65rem;
+      font-weight: 850;
+      letter-spacing: -0.03em;
+    }
+
+    .card-sub {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .notice {
+      border-radius: 16px;
+      padding: 16px 18px;
+      border: 1px solid;
+      margin-top: 14px;
+    }
+
+    .notice.warning {
+      background: var(--warning-soft);
+      border-color: #fedf89;
+      color: #7a2e0e;
+    }
+
+    .notice.danger {
+      background: var(--danger-soft);
+      border-color: #fecdca;
+      color: #7a271a;
+    }
+
+    .notice.success {
+      background: var(--success-soft);
+      border-color: #abefc6;
+      color: #085d3a;
+    }
+
+    .notice strong { display: block; margin-bottom: 3px; }
+
+    .table-wrap {
+      overflow-x: auto;
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      box-shadow: 0 4px 14px rgba(16, 24, 40, 0.035);
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      min-width: 820px;
+    }
+
+    th, td {
+      padding: 13px 14px;
+      border-bottom: 1px solid var(--line);
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    th {
+      position: sticky;
+      top: 0;
+      background: #f8faff;
+      color: #475467;
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    th:first-child, td:first-child { text-align: left; }
+    tbody tr:hover { background: #fbfcff; }
+    tbody tr.special-row { background: #fffaf4; }
+    tbody tr.proposed-row { background: #f3fff8; }
+
+    tfoot td {
+      font-weight: 850;
+      background: #f4f7ff;
+      border-bottom: 0;
+    }
+
+    .amount-strong { font-weight: 800; color: var(--primary); }
+    .small { color: var(--muted); font-size: 0.88rem; }
+
+    .proposal-grid {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 14px;
+    }
+
+    .proposal-list {
+      margin: 10px 0 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .proposal-list li {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .proposal-list li:last-child {
+      border-bottom: 0;
+      font-size: 1.08rem;
+      font-weight: 850;
+    }
+
+    .calculator {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 20px;
+      box-shadow: 0 4px 14px rgba(16, 24, 40, 0.035);
+    }
+
+    .input-row {
+      display: flex;
+      gap: 10px;
+      align-items: stretch;
+      margin-top: 12px;
+    }
+
+    .currency-input {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      border: 1px solid #cfd6e4;
+      border-radius: 12px;
+      background: white;
+      overflow: hidden;
+    }
+
+    .currency-input span {
+      padding: 0 12px;
+      color: var(--muted);
+      font-weight: 750;
+    }
+
+    input[type="number"] {
+      width: 100%;
+      border: 0;
+      outline: 0;
+      font: inherit;
+      font-size: 1.1rem;
+      padding: 12px 12px 12px 0;
+      color: var(--ink);
+    }
+
+    button {
+      border: 0;
+      border-radius: 12px;
+      background: var(--primary);
+      color: white;
+      padding: 0 18px;
+      font: inherit;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    button:hover { filter: brightness(0.96); }
+
+    .calc-output {
+      margin-top: 14px;
+      padding: 15px;
+      border-radius: 14px;
+      background: var(--primary-soft);
+    }
+
+    .calc-output .big {
+      font-size: 1.55rem;
+      font-weight: 850;
+      color: #2545ba;
+    }
+
+    .milestones {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 9px;
+      margin-top: 12px;
+    }
+
+    .milestone {
+      padding: 11px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: white;
+    }
+
+    .milestone strong { display: block; }
+    .milestone span { color: var(--muted); font-size: 0.85rem; }
+
+    .source {
+      margin-top: 22px;
+      color: var(--muted);
+      font-size: 0.82rem;
+      text-align: center;
+    }
+
+    .print-btn {
+      margin-top: 14px;
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.3);
+      padding: 9px 14px;
+    }
+
+    @media (max-width: 800px) {
+      .total-panel, .cards, .proposal-grid { grid-template-columns: 1fr; }
+      .hero { padding: 22px; border-radius: 18px; }
+      .milestones { grid-template-columns: 1fr; }
+      .page { width: min(100% - 18px, 1120px); margin-top: 9px; }
+    }
+
+    @media print {
+      body { background: white; }
+      .page { width: 100%; margin: 0; }
+      .hero, .card, .table-wrap, .calculator { box-shadow: none; }
+      .hero { background: white; color: black; border: 2px solid #222; }
+      .total-box, .statement-note { background: white; border: 1px solid #aaa; }
+      .hero-meta { color: #444; }
+      .print-btn, .calculator { display: none; }
+      .section { break-inside: avoid; }
+    }
+  </style>
 </head>
+
 <body>
-<main class="page">
-<header class="hero">
-<p class="eyebrow">Private repayment reference</p>
-<h1>Property Charges — Yearly Breakdown</h1>
-<div class="meta">Statement date: 21 May 2026 · Personal and unit details removed</div>
-<div class="heroGrid">
-<div class="heroBox"><div class="label">Total outstanding</div><div class="total">RM10,620.12</div><div>All yearly figures below reconcile to this balance.</div></div>
-<div class="heroBox"><strong>Main point</strong><br>Almost half is an earlier opening balance. A separate RM1,185.20 debt fee was added in 2023.</div>
-</div>
-<button class="print" onclick="print()">Print / Save as PDF</button>
-</header>
-<section class="section">
-<h2>Where the balance comes from</h2>
-<div class="cards">
-<article class="card"><div class="label">Opening balance</div><div class="value">RM5,061.42</div><div class="small">Brought forward before November 2016.</div><div class="bar"><span style="width:47.66%"></span></div><div class="small">47.7% of total</div></article>
-<article class="card"><div class="label">Normal charges</div><div class="value">RM4,373.50</div><div class="small">Service charge, sinking fund, quit rent and fire insurance.</div><div class="bar"><span style="width:41.18%"></span></div><div class="small">41.2% of total</div></article>
-<article class="card"><div class="label">2023 debt fee</div><div class="value">RM1,185.20</div><div class="small">Listed as a 15% debt fee.</div><div class="bar"><span style="width:11.16%"></span></div><div class="small">11.2% of total</div></article>
-</div>
-<div class="notice warning"><strong>Check before making a large payment</strong>Request the detailed origin of the RM5,061.42 opening balance and ask whether the RM1,185.20 debt fee can be reduced, waived or separately negotiated.</div>
-</section>
-<section class="section">
-<h2>Yearly summary</h2>
-<div class="tableWrap"><table>
-<thead><tr><th>Year / period</th><th>Service</th><th>Sinking</th><th>Quit rent</th><th>Insurance</th><th>Special fee</th><th>Year total</th><th>Cumulative</th></tr></thead>
-<tbody>
-<tr class="special"><td><strong>Opening balance</strong><br><span class="small">Before Nov 2016</span></td><td>—</td><td>—</td><td>—</td><td>—</td><td>RM5,061.42</td><td class="strong">RM5,061.42</td><td>RM5,061.42</td></tr>
-<tr><td><strong>2016</strong><br><span class="small">Nov–Dec</span></td><td>RM60.00</td><td>RM6.00</td><td>—</td><td>—</td><td>—</td><td class="strong">RM66.00</td><td>RM5,127.42</td></tr>
-<tr><td><strong>2017</strong></td><td>RM360.00</td><td>RM36.00</td><td>RM7.95</td><td>RM13.80</td><td>—</td><td class="strong">RM417.75</td><td>RM5,545.17</td></tr>
-<tr><td><strong>2018</strong></td><td>RM360.00</td><td>RM36.00</td><td>RM7.95</td><td>RM16.00</td><td>—</td><td class="strong">RM419.95</td><td>RM5,965.12</td></tr>
-<tr><td><strong>2019</strong></td><td>RM360.00</td><td>RM36.00</td><td>RM7.95</td><td>RM13.55</td><td>—</td><td class="strong">RM417.50</td><td>RM6,382.62</td></tr>
-<tr><td><strong>2020</strong></td><td>RM360.00</td><td>RM36.00</td><td>RM7.95</td><td>RM13.60</td><td>—</td><td class="strong">RM417.55</td><td>RM6,800.17</td></tr>
-<tr><td><strong>2021</strong></td><td>RM360.00</td><td>RM36.00</td><td>RM7.95</td><td>RM13.60</td><td>—</td><td class="strong">RM417.55</td><td>RM7,217.72</td></tr>
-<tr><td><strong>2022</strong></td><td>RM380.40</td><td>RM39.60</td><td>RM20.70</td><td>RM13.60</td><td>—</td><td class="strong">RM454.30</td><td>RM7,672.02</td></tr>
-<tr class="special"><td><strong>2023</strong><br><span class="small">Includes debt fee</span></td><td>RM421.20</td><td>RM46.80</td><td>RM20.70</td><td>RM13.60</td><td>RM1,185.20</td><td class="strong">RM1,687.50</td><td>RM9,359.52</td></tr>
-<tr><td><strong>2024</strong></td><td>RM421.20</td><td>RM46.80</td><td>RM20.70</td><td>RM13.75</td><td>—</td><td class="strong">RM502.45</td><td>RM9,861.97</td></tr>
-<tr><td><strong>2025</strong></td><td>RM421.20</td><td>RM46.80</td><td>RM20.70</td><td>RM12.10</td><td>—</td><td class="strong">RM500.80</td><td>RM10,362.77</td></tr>
-<tr><td><strong>2026</strong><br><span class="small">Jan–May</span></td><td>RM180.90</td><td>RM20.10</td><td>RM20.70</td><td>RM35.65</td><td>—</td><td class="strong">RM257.35</td><td>RM10,620.12</td></tr>
-</tbody><tfoot><tr><td colspan="6">TOTAL</td><td>RM10,620.12</td><td>RM10,620.12</td></tr></tfoot>
-</table></div>
-<div class="notice success"><strong>A normal complete year is around RM417–RM502</strong>The 2023 total is unusually high because normal 2023 charges of RM502.30 were combined with the RM1,185.20 debt fee.</div>
-</section>
-<section class="section">
-<h2>Practical repayment order</h2>
-<div class="plan">
-<article class="card"><ol class="steps">
-<li><strong>Keep all new charges current</strong><span class="small">Stop the arrears from continuing to grow.</span></li>
-<li><strong>Clear 2026 — RM257.35</strong><span class="small">The smallest first milestone.</span></li>
-<li><strong>Clear 2025 — RM500.80</strong><span class="small">Then settle a complete recent year.</span></li>
-<li><strong>Clear 2024 — RM502.45</strong><span class="small">Continue one year at a time.</span></li>
-<li><strong>Separate 2023 charges and debt fee</strong><span class="small">Normal charges RM502.30; debt fee RM1,185.20.</span></li>
-<li><strong>Negotiate the opening balance</strong><span class="small">Ask for its original breakdown and a long-term instalment arrangement.</span></li>
-</ol></article>
-<article class="calc"><div class="label">Repayment calculator</div><h3 style="margin:6px 0 0">Monthly payment budget</h3><div class="inputRow"><label class="money"><span>RM</span><input id="budget" type="number" min="1" step="10" value="300"></label><button class="btn" onclick="calculate()">Calculate</button></div><div id="result" class="output"></div><div id="miles" class="milestones"></div><p class="small">Estimate only. This assumes no future fees, penalties or new charges.</p></article>
-</div>
-<div class="notice danger"><strong>Confirm how payments will be allocated</strong>The management system may automatically use each payment against the oldest balance rather than the particular year you choose. Get the arrangement in writing.</div>
-</section>
-<p class="footer">Privacy-safe summary based on a statement dated 21 May 2026. No name, address or unit number is displayed.</p>
-</main>
-<script>
-const total=10620.12,targets=[['2026 charges',257.35],['2025 charges',500.8],['2024 charges',502.45],['2023 normal charges',502.3],['2023 debt fee',1185.2],['Opening balance',5061.42]];function rm(n){return'RM'+n.toLocaleString('en-MY',{minimumFractionDigits:2,maximumFractionDigits:2})}function duration(m){let y=Math.floor(m/12),r=m%12;if(!y)return r+' month'+(r==1?'':'s');if(!r)return y+' year'+(y==1?'':'s');return y+' year'+(y==1?'':'s')+' '+r+' month'+(r==1?'':'s')}function calculate(){let b=Number(document.getElementById('budget').value),r=document.getElementById('result'),m=document.getElementById('miles');if(!isFinite(b)||b<=0){r.innerHTML='<strong>Enter an amount above RM0.</strong>';m.innerHTML='';return}let months=Math.ceil(total/b);r.innerHTML='<div class="small">Estimated time to clear current total</div><div class="big">'+duration(months)+'</div><div class="small">'+months+' payments of about '+rm(b)+'</div>';m.innerHTML=targets.map(x=>'<div class="mile"><strong>'+x[0]+'</strong><span class="small">'+rm(x[1])+' · about '+duration(Math.ceil(x[1]/b))+'</span></div>').join('')}calculate();
-</script>
+  <main class="page">
+    <header class="hero">
+      <p class="eyebrow">Updated property charges summary</p>
+      <h1>Apartment Harmoni — Outstanding Breakdown</h1>
+      <div class="hero-meta">
+        <span>Official statement: 21 May 2026</span>
+        <span>Updated with invoices through July 2026</span>
+        <span>Privacy-safe: unit and owner details omitted</span>
+      </div>
+
+      <div class="total-panel">
+        <div class="total-box">
+          <div class="total-label">ESTIMATED OUTSTANDING THROUGH JULY 2026</div>
+          <div class="total-value">RM10,710.12</div>
+          <div>Official May statement RM10,620.12 + June RM45.00 + July RM45.00.</div>
+        </div>
+        <div class="statement-note">
+          <strong>Proposed immediate settlement</strong>
+          Pay 2024 through July 2026: <strong>RM1,350.60</strong>.<br>
+          Exclude the RM1,185.20 debt fee until management clarifies it.
+        </div>
+      </div>
+
+      <button class="print-btn" type="button" onclick="window.print()">Print / Save as PDF</button>
+    </header>
+
+    <section class="section">
+      <h2 class="section-title">Latest position</h2>
+      <div class="cards">
+        <article class="card">
+          <div class="card-label">Official statement balance</div>
+          <div class="card-value">RM10,620.12</div>
+          <div class="card-sub">Balance stated as at 21 May 2026.</div>
+        </article>
+
+        <article class="card">
+          <div class="card-label">Later June–July charges</div>
+          <div class="card-value">RM90.00</div>
+          <div class="card-sub">RM45.00 for June and RM45.00 for July.</div>
+        </article>
+
+        <article class="card">
+          <div class="card-label">2019–July 2026 charges</div>
+          <div class="card-value">RM4,745.00</div>
+          <div class="card-sub">Includes the separate RM1,185.20 debt fee posted in 2023.</div>
+        </article>
+      </div>
+
+      <div class="notice warning">
+        <strong>Management confirmation is still required</strong>
+        RM10,710.12 is a reconciliation estimate, not a replacement official statement. Ask management to confirm the current balance and how your payment will be allocated before paying.
+      </div>
+    </section>
+
+    <section class="section">
+      <h2 class="section-title">Detailed charges from 2019 to July 2026</h2>
+      <div class="table-wrap">
+        <table aria-label="Detailed property charges from 2019 to July 2026">
+          <thead>
+            <tr>
+              <th>Year / period</th>
+              <th>Service charge</th>
+              <th>Sinking fund</th>
+              <th>Quit rent</th>
+              <th>Fire insurance</th>
+              <th>Debt fee</th>
+              <th>Year total</th>
+              <th>Cumulative from 2019</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>2019</strong></td>
+              <td>RM360.00</td><td>RM36.00</td><td>RM7.95</td><td>RM13.55</td><td>—</td>
+              <td class="amount-strong">RM417.50</td><td>RM417.50</td>
+            </tr>
+            <tr>
+              <td><strong>2020</strong></td>
+              <td>RM360.00</td><td>RM36.00</td><td>RM7.95</td><td>RM13.60</td><td>—</td>
+              <td class="amount-strong">RM417.55</td><td>RM835.05</td>
+            </tr>
+            <tr>
+              <td><strong>2021</strong></td>
+              <td>RM360.00</td><td>RM36.00</td><td>RM7.95</td><td>RM13.60</td><td>—</td>
+              <td class="amount-strong">RM417.55</td><td>RM1,252.60</td>
+            </tr>
+            <tr>
+              <td><strong>2022</strong></td>
+              <td>RM380.40</td><td>RM39.60</td><td>RM20.70</td><td>RM13.60</td><td>—</td>
+              <td class="amount-strong">RM454.30</td><td>RM1,706.90</td>
+            </tr>
+            <tr class="special-row">
+              <td><strong>2023</strong><br><span class="small">Includes debt fee</span></td>
+              <td>RM421.20</td><td>RM46.80</td><td>RM20.70</td><td>RM13.60</td><td>RM1,185.20</td>
+              <td class="amount-strong">RM1,687.50</td><td>RM3,394.40</td>
+            </tr>
+            <tr class="proposed-row">
+              <td><strong>2024</strong><br><span class="small">Proposed settlement</span></td>
+              <td>RM421.20</td><td>RM46.80</td><td>RM20.70</td><td>RM13.75</td><td>—</td>
+              <td class="amount-strong">RM502.45</td><td>RM3,896.85</td>
+            </tr>
+            <tr class="proposed-row">
+              <td><strong>2025</strong><br><span class="small">Proposed settlement</span></td>
+              <td>RM421.20</td><td>RM46.80</td><td>RM20.70</td><td>RM12.10</td><td>—</td>
+              <td class="amount-strong">RM500.80</td><td>RM4,397.65</td>
+            </tr>
+            <tr class="proposed-row">
+              <td><strong>2026</strong><br><span class="small">January–July</span></td>
+              <td>RM261.90</td><td>RM29.10</td><td>RM20.70</td><td>RM35.65</td><td>—</td>
+              <td class="amount-strong">RM347.35</td><td>RM4,745.00</td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colspan="6">TOTAL CHARGES FROM 2019 THROUGH JULY 2026</td>
+              <td>RM4,745.00</td>
+              <td>RM4,745.00</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <div class="notice success">
+        <strong>Normal charges excluding the debt fee</strong>
+        The 2019–July 2026 normal property charges total RM3,559.80. The difference is the RM1,185.20 debt fee posted in 2023.
+      </div>
+    </section>
+
+    <section class="section">
+      <h2 class="section-title">Proposed payment to management</h2>
+      <div class="proposal-grid">
+        <article class="card">
+          <div class="card-label">Settle recent years first</div>
+          <ul class="proposal-list">
+            <li><span>2024</span><strong>RM502.45</strong></li>
+            <li><span>2025</span><strong>RM500.80</strong></li>
+            <li><span>January–July 2026</span><strong>RM347.35</strong></li>
+            <li><span>Total proposed payment</span><strong>RM1,350.60</strong></li>
+          </ul>
+        </article>
+
+        <article class="card">
+          <div class="card-label">Pending clarification</div>
+          <div class="card-value">RM1,185.20</div>
+          <div class="card-sub">Debt Fee — 15% as at 25 May 2023.</div>
+          <div class="notice warning" style="margin-bottom:0;">
+            Ask management for the contractual basis, calculation, notice issued and whether the fee can be waived or reduced.
+          </div>
+        </article>
+      </div>
+
+      <div class="notice danger">
+        <strong>Confirm allocation before paying</strong>
+        Ask management to confirm in writing that RM1,350.60 is the final amount for 2024 through July 2026 and that the payment will be applied to those periods—not automatically to the oldest balance or the disputed debt fee.
+      </div>
+    </section>
+
+    <section class="section">
+      <h2 class="section-title">Simple repayment calculator</h2>
+      <article class="calculator">
+        <div class="card-label">Monthly budget</div>
+        <h3 style="margin:6px 0 0;">Estimate time to clear the proposed RM1,350.60</h3>
+        <div class="input-row">
+          <label class="currency-input">
+            <span>RM</span>
+            <input id="monthlyBudget" type="number" min="1" step="10" value="300" />
+          </label>
+          <button type="button" onclick="calculatePlan()">Calculate</button>
+        </div>
+
+        <div class="calc-output" id="calcOutput" aria-live="polite"></div>
+        <div class="milestones" id="milestones"></div>
+        <p class="small" style="margin-bottom:0;">
+          Estimate only. Management must confirm the final balance, payment allocation and whether any new charges have been added.
+        </p>
+      </article>
+    </section>
+
+    <p class="source">
+      Source: consolidated account statement dated 21 May 2026, reconciled with later invoices through July 2026. Figures are grouped by transaction year. Personal and unit details are intentionally omitted.
+    </p>
+  </main>
+
+  <script>
+    const proposedPayment = 1350.60;
+    const targets = [
+      { label: "2026 Jan–Jul", amount: 347.35 },
+      { label: "2025", amount: 500.80 },
+      { label: "2024", amount: 502.45 }
+    ];
+
+    function formatRM(value) {
+      return "RM" + value.toLocaleString("en-MY", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+    }
+
+    function humanDuration(months) {
+      const years = Math.floor(months / 12);
+      const remaining = months % 12;
+      if (years === 0) return `${remaining} month${remaining === 1 ? "" : "s"}`;
+      if (remaining === 0) return `${years} year${years === 1 ? "" : "s"}`;
+      return `${years} year${years === 1 ? "" : "s"} ${remaining} month${remaining === 1 ? "" : "s"}`;
+    }
+
+    function calculatePlan() {
+      const budget = Number(document.getElementById("monthlyBudget").value);
+      const output = document.getElementById("calcOutput");
+      const milestoneBox = document.getElementById("milestones");
+
+      if (!Number.isFinite(budget) || budget <= 0) {
+        output.innerHTML = "<strong>Please enter a monthly amount above RM0.</strong>";
+        milestoneBox.innerHTML = "";
+        return;
+      }
+
+      const months = Math.ceil(proposedPayment / budget);
+      const finalPayment = proposedPayment - budget * (months - 1);
+      output.innerHTML = `
+        <div class="small">Estimated time to clear ${formatRM(proposedPayment)}</div>
+        <div class="big">${humanDuration(months)}</div>
+        <div class="small">About ${months - 1} payment${months - 1 === 1 ? "" : "s"} of ${formatRM(budget)}, then a final payment of ${formatRM(Math.max(finalPayment, 0))}.</div>
+      `;
+
+      milestoneBox.innerHTML = targets.map(target => {
+        const targetMonths = Math.ceil(target.amount / budget);
+        return `
+          <div class="milestone">
+            <strong>${target.label}</strong>
+            <span>${formatRM(target.amount)} · about ${humanDuration(targetMonths)}</span>
+          </div>
+        `;
+      }).join("");
+    }
+
+    calculatePlan();
+  </script>
 </body>
 </html>
